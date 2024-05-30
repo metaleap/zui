@@ -1,0 +1,6 @@
+<!-- https://learn.svelte.dev/tutorial/dynamic-attributes -->
+<script>
+    let src = "/image.png";
+</script>
+
+<img alt="Rick" src={src} />
