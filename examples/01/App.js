@@ -1,4 +1,5 @@
-//1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh
+// Code generated from App.zui. DO NOT EDIT
+// Source file content hash: 1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh
 
 export class App extends HTMLElement {
   constructor() {
@@ -6,7 +7,7 @@ export class App extends HTMLElement {
   }
   connectedCallback() {
     const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements();
+    this.zuiCreateHTMLElements(shadowRoot);
   }
   disconnectedCallback() {
   }
@@ -14,15 +15,10 @@ export class App extends HTMLElement {
   }
   attributeChangedCallback() {
   }
-  zuiCreateHTMLElements() {
-    const node_0_0 = document.createElement("body");
-    const node_1_0 = document.createElement("h1");
-    node_1_0.textContent = "Welcome!";
-    node_0_0.appendChild(node_1_0);
-    shadowRoot.appendChild(node_0_0);
-    const node_0_1 = document.createElement("body");
-    node_0_1.textContent = "\n";
-    shadowRoot.appendChild(node_0_1);
+  zuiCreateHTMLElements(shadowRoot) {
+    const node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh = document.createElement("h1");
+    node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh.append("Welcome!");
+    shadowRoot.appendChild(node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh);
   }
 }
-customElements.define('zui-App', App);
+customElements.define('zui-app_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh', App);
