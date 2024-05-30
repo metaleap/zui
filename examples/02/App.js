@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 258eb9ct2vsm42hxh56lho4qp8t85tq388rdqr1wexwhdj8guxrq2agr
+// Source file content hash: 3edvizbepy7g61bfhkywt0fhfq1di7znfa8snve3121aa37ciwpc1hudgkr
 
 export class App extends HTMLElement {
   constructor() {
@@ -16,18 +16,13 @@ export class App extends HTMLElement {
   attributeChangedCallback() {
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_h1_0_0_258eb9ct2vsm42hxh56lho4qp8t85tq388rdqr1wexwhdj8guxrq2agr = document.createElement("h1");
-    node_h1_0_0_258eb9ct2vsm42hxh56lho4qp8t85tq388rdqr1wexwhdj8guxrq2agr.append("Hello {greetName}!");
-    shadowRoot.appendChild(node_h1_0_0_258eb9ct2vsm42hxh56lho4qp8t85tq388rdqr1wexwhdj8guxrq2agr);
+    const node_h1_0_0_3edvizbepy7g61bfhkywt0fhfq1di7znfa8snve3121aa37ciwpc1hudgkr = document.createElement("h1");
+    node_h1_0_0_3edvizbepy7g61bfhkywt0fhfq1di7znfa8snve3121aa37ciwpc1hudgkr.append("Hello {greetName}!");
+    shadowRoot.appendChild(node_h1_0_0_3edvizbepy7g61bfhkywt0fhfq1di7znfa8snve3121aa37ciwpc1hudgkr);
   }
-
-
-    let greetName = "ZUI";
-
-    function foo() {
-        console.log("FOOBAR");
-    }
-
-
+  foo() {
+    console.log("FOOBAR ") + fbb;
+  }
+  fbb = "bar baz";
 }
-customElements.define('zui-app_258eb9ct2vsm42hxh56lho4qp8t85tq388rdqr1wexwhdj8guxrq2agr', App);
+customElements.define('zui-app_3edvizbepy7g61bfhkywt0fhfq1di7znfa8snve3121aa37ciwpc1hudgkr', App);

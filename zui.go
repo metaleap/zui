@@ -1,11 +1,20 @@
 package zui
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
+
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/js"
+)
+
+const (
+	errMsgMultipleTopLevelScriptElems = "A component can only have one top-level <script> element"
 )
 
 func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
@@ -20,7 +29,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		return "", err
 	}
 
-	if true {
+	if false {
 		htmlSrc(&buf, htm_root)
 		println(buf.String())
 		buf.Reset()
@@ -61,7 +70,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		for node := htm_head.FirstChild; node != nil; node = node.NextSibling {
 			if node.Type == html.ElementNode && node.Data == "script" {
 				if htm_script != nil {
-					panic(zuiFilePath + ": A component can only have one top-level <script> element")
+					return "", errors.New(zuiFilePath + ": " + errMsgMultipleTopLevelScriptElems)
 				}
 				htm_script = node
 			}
@@ -73,7 +82,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		for node := htm_body.FirstChild; node != nil; node = node.NextSibling {
 			if node.Type == html.ElementNode && node.Data == "script" {
 				if htm_script != nil {
-					panic(zuiFilePath + ": A component can only have one top-level <script> element")
+					return "", errors.New(zuiFilePath + ": " + errMsgMultipleTopLevelScriptElems)
 				}
 				htm_script = node
 			}
@@ -83,8 +92,11 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	}
 	buf.WriteString(newline + "  }")
 
-	if htm_script != nil {
-		buf.WriteString(newline + newline + htm_script.FirstChild.Data + newline)
+	if htm_script != nil && htm_script.FirstChild != nil &&
+		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
+		if err := htmlWalkScriptAndEmitJS(zuiFilePath, &buf, htm_script.FirstChild.Data); err != nil {
+			return "", err
+		}
 	}
 
 	buf.WriteString(newline + "}")
@@ -111,4 +123,34 @@ func htmlWalkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Nod
 			}
 		}
 	}
+}
+
+func htmlWalkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) error {
+	js_ast, err := js.Parse(parse.NewInputString(scriptNodeText), js.Options{})
+	if err != nil {
+		return errors.New(zuiFilePath + ": " + err.Error())
+	}
+
+	for _, statement := range js_ast.List {
+		switch stmt := statement.(type) {
+		case *js.VarDecl:
+		case *js.FuncDecl:
+			if stmt.Name == nil || len(stmt.Name.Data) == 0 {
+				return errors.New(zuiFilePath + ": top-level functions need a name, since they become class methods")
+			}
+
+			var tmp strings.Builder
+			stmt.JS(&tmp)
+			src_fn := tmp.String()
+
+			if !strings.HasPrefix(src_fn, "function ") {
+				return errors.New(zuiFilePath + ": top-level function " + stmt.Name.String() + " expected to start with `function` declaration")
+			}
+			buf.WriteString("\n" + src_fn[len("function "):])
+		default:
+			panic(fmt.Sprintf("%T", stmt))
+		}
+	}
+
+	return nil
 }
