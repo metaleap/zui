@@ -1,0 +1,9 @@
+<script>
+    let greetName = "ZUI";
+
+    function foo() {
+        console.log("FOOBAR");
+    }
+</script>
+
+<h1>Hello {greetName}!</h1>

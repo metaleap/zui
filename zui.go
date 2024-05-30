@@ -14,55 +14,86 @@ func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
 	var buf strings.Builder
-	buf.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
 
 	htm_root, err := html.Parse(strings.NewReader(strings.TrimSpace(zuiFileSrc)))
 	if err != nil {
 		return "", err
 	}
 
+	if true {
+		htmlSrc(&buf, htm_root)
+		println(buf.String())
+		buf.Reset()
+	}
+
+	buf.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
 	zui_file_name := filepath.Base(zuiFilePath)
-	pref, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
-	buf.WriteString(pref + "export class " + zui_class_name + " extends HTMLElement {")
+	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
+	buf.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
 
-	buf.WriteString(pref + "  constructor() {")
-	buf.WriteString(pref + "    super();")
-	buf.WriteString(pref + "  }")
+	buf.WriteString(newline + "  constructor() {")
+	buf.WriteString(newline + "    super();")
+	buf.WriteString(newline + "  }")
 
-	buf.WriteString(pref + "  connectedCallback() {")
-	buf.WriteString(pref + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
-	buf.WriteString(pref + "    this.zuiCreateHTMLElements(shadowRoot);")
-	buf.WriteString(pref + "  }")
+	buf.WriteString(newline + "  connectedCallback() {")
+	buf.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
+	buf.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
+	buf.WriteString(newline + "  }")
 
-	buf.WriteString(pref + "  disconnectedCallback() {")
-	buf.WriteString(pref + "  }")
-	buf.WriteString(pref + "  adoptedCallback() {")
-	buf.WriteString(pref + "  }")
-	buf.WriteString(pref + "  attributeChangedCallback() {")
-	buf.WriteString(pref + "  }")
+	buf.WriteString(newline + "  disconnectedCallback() {")
+	buf.WriteString(newline + "  }")
+	buf.WriteString(newline + "  adoptedCallback() {")
+	buf.WriteString(newline + "  }")
+	buf.WriteString(newline + "  attributeChangedCallback() {")
+	buf.WriteString(newline + "  }")
 
-	buf.WriteString(pref + "  zuiCreateHTMLElements(shadowRoot) {")
-	htm_body := htm_root.FirstChild.FirstChild
-	for htm_body != nil && htm_body.Data != "body" {
-		htm_body = htm_body.NextSibling
-	}
-	if htm_body == nil || htm_body.Data != "body" {
-		panic("breaking changes in golang.org/x/net/html")
-	}
-	top_level_scripts := htmlWalkAndEmitJS(&buf, 0, htm_body, "shadowRoot", zuiFileHash, nil)
-	buf.WriteString(pref + "  }")
-
-	for _, top_level_script := range top_level_scripts {
-		buf.WriteString(pref + pref + top_level_script + pref)
+	var htm_head, htm_body, htm_script *html.Node
+	for node := htm_root.FirstChild.FirstChild; node != nil; node = node.NextSibling {
+		if node.Type == html.ElementNode && node.Data == "head" {
+			htm_head = node
+		}
+		if node.Type == html.ElementNode && node.Data == "body" {
+			htm_body = node
+		}
 	}
 
-	buf.WriteString(pref + "}")
-	buf.WriteString(pref + "customElements.define('zui-" + strings.ToLower(zui_class_name) + "_" + zuiFileHash + "', " + zui_class_name + ");")
+	if htm_head != nil {
+		for node := htm_head.FirstChild; node != nil; node = node.NextSibling {
+			if node.Type == html.ElementNode && node.Data == "script" {
+				if htm_script != nil {
+					panic(zuiFilePath + ": A component can only have one top-level <script> element")
+				}
+				htm_script = node
+			}
+		}
+	}
+
+	buf.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
+	if htm_body != nil {
+		for node := htm_body.FirstChild; node != nil; node = node.NextSibling {
+			if node.Type == html.ElementNode && node.Data == "script" {
+				if htm_script != nil {
+					panic(zuiFilePath + ": A component can only have one top-level <script> element")
+				}
+				htm_script = node
+			}
+		}
+
+		htmlWalkBodyAndEmitJS(&buf, 0, htm_body, "shadowRoot", zuiFileHash)
+	}
+	buf.WriteString(newline + "  }")
+
+	if htm_script != nil {
+		buf.WriteString(newline + newline + htm_script.FirstChild.Data + newline)
+	}
+
+	buf.WriteString(newline + "}")
+	buf.WriteString(newline + "customElements.define('zui-" + strings.ToLower(zui_class_name) + "_" + zuiFileHash + "', " + zui_class_name + ");")
 
 	return buf.String() + "\n", err
 }
 
-func htmlWalkAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string, topLevelScripts []string) []string {
+func htmlWalkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string) {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
 		child_nodes := []*html.Node{parentNode.FirstChild}
 		for next := parentNode.FirstChild.NextSibling; next != nil; next = next.NextSibling {
@@ -75,11 +106,9 @@ func htmlWalkAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, p
 			case html.ElementNode:
 				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
-				topLevelScripts = htmlWalkAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash, topLevelScripts)
+				htmlWalkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash)
 				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
 			}
 		}
 	}
-
-	return topLevelScripts
 }
