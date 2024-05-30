@@ -2,7 +2,6 @@ package zui
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -94,9 +93,11 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
+		buf.WriteString(newline + newline)
 		if err := htmlWalkScriptAndEmitJS(zuiFilePath, &buf, htm_script.FirstChild.Data); err != nil {
 			return "", err
 		}
+		buf.WriteString(newline + newline)
 	}
 
 	buf.WriteString(newline + "}")
@@ -131,26 +132,46 @@ func htmlWalkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNod
 		return errors.New(zuiFilePath + ": " + err.Error())
 	}
 
-	for _, statement := range js_ast.List {
-		switch stmt := statement.(type) {
-		case *js.VarDecl:
-		case *js.FuncDecl:
-			if stmt.Name == nil || len(stmt.Name.Data) == 0 {
-				return errors.New(zuiFilePath + ": top-level functions need a name, since they become class methods")
+	top_level_vars := map[string]js.BindingElement{}
+	for _, stmt := range js_ast.List {
+		decl, _ := stmt.(*js.VarDecl)
+		if decl == nil {
+			continue
+		}
+		for _, item := range decl.List {
+			if item.Binding != nil {
+				name := jsString(item.Binding)
+				top_level_vars[name] = item
+				buf.WriteString("\n" + name)
+				if item.Default != nil {
+					buf.WriteString(" = " + jsString(item.Default))
+				}
+				buf.WriteByte(';')
 			}
-
-			var tmp strings.Builder
-			stmt.JS(&tmp)
-			src_fn := tmp.String()
-
-			if !strings.HasPrefix(src_fn, "function ") {
-				return errors.New(zuiFilePath + ": top-level function " + stmt.Name.String() + " expected to start with `function` declaration")
-			}
-			buf.WriteString("\n" + src_fn[len("function "):])
-		default:
-			panic(fmt.Sprintf("%T", stmt))
 		}
 	}
 
+	for _, stmt := range js_ast.List {
+		fn, _ := stmt.(*js.FuncDecl)
+		if fn == nil {
+			continue
+		}
+		if fn.Name == nil || len(fn.Name.Name()) == 0 {
+			return errors.New(zuiFilePath + ": all top-level functions need a name, since they become class methods")
+		}
+
+		src_fn := jsString(fn)
+		if !strings.HasPrefix(src_fn, "function ") {
+			return errors.New(zuiFilePath + ": top-level function " + fn.Name.String() + " expected to start with `function` declaration")
+		}
+		buf.WriteString("\n" + src_fn[len("function "):])
+	}
+
 	return nil
+}
+
+func jsString(node js.INode) string {
+	var buf strings.Builder
+	node.JS(&buf)
+	return buf.String()
 }
