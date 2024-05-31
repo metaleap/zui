@@ -12,6 +12,6 @@ func jsString(node js.INode) string {
 	return buf.String()
 }
 
-func jsWalkFunc() {
+func walkAndRewriteTopLevelFuncAST(fnParams js.Params, fnBody *js.BlockStmt, allTopLevelDecls map[string]js.IExpr) {
 
 }

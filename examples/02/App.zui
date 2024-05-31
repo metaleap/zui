@@ -1,3 +1,4 @@
+<!--https://learn.svelte.dev/tutorial/your-first-component-->
 <script>
     let greetName = "ZUI";
     let fooB = () => {

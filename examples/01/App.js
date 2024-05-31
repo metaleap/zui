@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh
+// Source file content hash: 1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2
 
 export class App extends HTMLElement {
   constructor() {
@@ -16,10 +16,10 @@ export class App extends HTMLElement {
   attributeChangedCallback() {
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh = document.createElement("h1");
-    node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh.append("Welcome!");
-    shadowRoot.appendChild(node_h1_0_0_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh);
+    const node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2 = document.createElement("h1");
+    node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2.append("Welcome!");
+    shadowRoot.appendChild(node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2);
   }
 }
 
-customElements.define('zui-app_1zmkbx3j6oiu2hybj9cbcikwb10lj7spbgbnl61l8rsg0gkubxjdi79wh', App);
+customElements.define('zui-app_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2', App);

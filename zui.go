@@ -12,10 +12,6 @@ import (
 	"github.com/tdewolff/parse/v2/js"
 )
 
-const (
-	errMsgMultipleTopLevelScriptElems = "A component can only have one top-level <script> element"
-)
-
 func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 	return "// Code generated from " + filepath.Base(zuiFilePath) + ". DO NOT EDIT\n// Source file content hash: " + zuiFileHash + "\n"
 }
@@ -51,6 +47,9 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	buf_js.WriteString(newline + "  }")
 
 	var htm_head, htm_body, htm_script *html.Node
+	for htm_root.FirstChild.Type == html.CommentNode {
+		htm_root.FirstChild = htm_root.FirstChild.NextSibling
+	}
 	// find the <head> and <body> first, either may have the top-level <script>
 	for node := htm_root.FirstChild.FirstChild; node != nil; node = node.NextSibling {
 		if node.Type == html.ElementNode && node.Data == "head" {
@@ -70,7 +69,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 
 	// deal with the <body>
 	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
-	if htm_body != nil { // also look for the top-level <script> in the <body>, which happens if it's placed after other markup but still top-level
+	if htm_body != nil { // also look for the top-level <script> in the <body> (found there instead of <head> if it's placed after other markup but still top-level)
 		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_body, htm_script)
 		if err != nil {
 			return "", err
@@ -139,11 +138,11 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	}
 
 	// now, emit the top-level decls, rewriting all func ASTs
-	for _, stmt := range js_ast.List { // not walking the map to preserve original ordering
+	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
 		switch it := stmt.(type) {
 		case *js.FuncDecl:
 			// name := it.Name.String()
-			walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+			walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
 			src_fn := jsString(it)
 			assert(strings.HasPrefix(src_fn, "function "))
 			buf.WriteString("\n" + src_fn[len("function "):])
@@ -154,10 +153,10 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
-						walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+						walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
 						item.Default = it
 					case *js.ArrowFunc:
-						walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+						walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
 						item.Default = it
 					}
 					buf.WriteString(" = " + jsString(item.Default))
@@ -167,8 +166,4 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 		}
 	}
 	return nil
-}
-
-func walkAndRewriteTopLevelFuncAST(fnParams *js.Params, fnBody *js.BlockStmt, allTopLevelDecls map[string]js.IExpr) {
-
 }

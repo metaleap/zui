@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: jkfc1nybzx5n2dny6byg7jhzp329msx31tuqq42iqksko8ncuetboqdr
+// Source file content hash: 1ng6fjtq1z9z39yo06krmaxnw2w1iq5o1vh2bu35mtjs1v38kqf1u7u1ox
 
 export class App extends HTMLElement {
   constructor() {
@@ -16,9 +16,9 @@ export class App extends HTMLElement {
   attributeChangedCallback() {
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_h1_0_0_jkfc1nybzx5n2dny6byg7jhzp329msx31tuqq42iqksko8ncuetboqdr = document.createElement("h1");
-    node_h1_0_0_jkfc1nybzx5n2dny6byg7jhzp329msx31tuqq42iqksko8ncuetboqdr.append("Hello {greetName}!");
-    shadowRoot.appendChild(node_h1_0_0_jkfc1nybzx5n2dny6byg7jhzp329msx31tuqq42iqksko8ncuetboqdr);
+    const node_h1_0_0_1ng6fjtq1z9z39yo06krmaxnw2w1iq5o1vh2bu35mtjs1v38kqf1u7u1ox = document.createElement("h1");
+    node_h1_0_0_1ng6fjtq1z9z39yo06krmaxnw2w1iq5o1vh2bu35mtjs1v38kqf1u7u1ox.append("Hello {greetName}!");
+    shadowRoot.appendChild(node_h1_0_0_1ng6fjtq1z9z39yo06krmaxnw2w1iq5o1vh2bu35mtjs1v38kqf1u7u1ox);
   }
 
 
@@ -37,4 +37,4 @@ foo() {
 
 }
 
-customElements.define('zui-app_jkfc1nybzx5n2dny6byg7jhzp329msx31tuqq42iqksko8ncuetboqdr', App);
+customElements.define('zui-app_1ng6fjtq1z9z39yo06krmaxnw2w1iq5o1vh2bu35mtjs1v38kqf1u7u1ox', App);
