@@ -351,8 +351,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			node.Link = re
 		}
 	case *js.BlockStmt:
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(js.IStmt); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(node.List[i]).(js.IStmt); re != nil {
 				node.List[i] = re
 			}
 		}
@@ -421,8 +421,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
 			node.Cond = re
 		}
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(js.IStmt); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(node.List[i]).(js.IStmt); re != nil {
 				node.List[i] = re
 			}
 		}
@@ -430,8 +430,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
 			node.Init = re
 		}
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.CaseClause); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.CaseClause); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -465,8 +465,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			node.Finally = re
 		}
 	case *js.ImportStmt:
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.Alias); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.Alias); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -474,8 +474,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Decl).(js.IExpr); re != nil {
 			node.Decl = re
 		}
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.Alias); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.Alias); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -487,8 +487,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			node.Literal = *re
 		}
 	case *js.BindingArray:
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.BindingElement); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -503,8 +503,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Rest).(*js.Var); re != nil {
 			node.Rest = re
 		}
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.BindingObjectItem); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.BindingObjectItem); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -513,14 +513,14 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			node.Default = re
 		}
 	case *js.VarDecl:
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.BindingElement); re != nil {
 				node.List[i] = *re
 			}
 		}
 	case *js.Params:
-		for i, it := range node.List {
-			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.BindingElement); re != nil {
 				node.List[i] = *re
 			}
 		}
@@ -531,8 +531,8 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Name).(*js.Var); re != nil {
 			node.Name = re
 		}
-		for i, it := range node.Params.List {
-			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+		for i := range node.Params.List {
+			if re, _ := rewrite(&node.Params.List[i]).(*js.BindingElement); re != nil {
 				node.Params.List[i] = *re
 			}
 		}
@@ -543,14 +543,46 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
 			node.Name = *re
 		}
-		for i, it := range node.Params.List {
-			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+		for i := range node.Params.List {
+			if re, _ := rewrite(&node.Params.List[i]).(*js.BindingElement); re != nil {
 				node.Params.List[i] = *re
 			}
 		}
 	case *js.Field:
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
+		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+			node.Name = *re
+		}
 	case *js.ClassElement:
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
+		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+			node.Name = *re
+		}
+		if re, _ := rewrite(node.StaticBlock).(*js.BlockStmt); re != nil {
+			node.StaticBlock = re
+		}
+		if re, _ := rewrite(node.Method).(*js.MethodDecl); re != nil {
+			node.Method = re
+		}
+		if re, _ := rewrite(node.Field).(*js.Field); re != nil {
+			node.Field = *re
+		}
 	case *js.ClassDecl:
+		if re, _ := rewrite(node.Name).(*js.Var); re != nil {
+			node.Name = re
+		}
+		if re, _ := rewrite(node.Extends).(js.IExpr); re != nil {
+			node.Extends = re
+		}
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.ClassElement); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.Element:
 	case *js.ArrayExpr:
 	case *js.Property:
