@@ -1,6 +1,6 @@
+<!--https://learn.svelte.dev/tutorial/your-first-component-->
 <script>
     let greetName = "zui";
 </script>
 
-<!--https://learn.svelte.dev/tutorial/your-first-component-->
 <h1>Hello {greetName.toUpperCase()}!</h1>

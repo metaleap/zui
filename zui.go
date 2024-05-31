@@ -18,6 +18,7 @@ func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
 	var buf_js strings.Builder // our result JS src we're building
+	zuiFileHash = "tmp"
 
 	htm_root, err := html.Parse(strings.NewReader(strings.TrimSpace(zuiFileSrc)))
 	if err != nil {
@@ -181,7 +182,7 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 						js_src := jsString(part)
 						span_var_name := "span_" + ContentHashStr([]byte(js_src))
 						buf.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
-						buf.WriteString(pref + "tmp_fn = function(this) { return " + js_src + " };")
+						buf.WriteString(pref + "tmp_fn = (function() { return " + js_src + " }).bind(this);")
 						buf.WriteString(pref + "this.subs_" + zuiFileHash + ".set(" + span_var_name + ", tmp_fn);")
 						buf.WriteString(pref + span_var_name + ".append(tmp_fn(this));")
 					default:
