@@ -1,14 +1,12 @@
 package main
 
 import (
-	"crypto/md5"
-	"crypto/sha1"
-	"encoding/binary"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+
+	"github.com/metaleap/zui"
 )
 
 func ıf[T any](b bool, t T, f T) T {
@@ -16,22 +14,6 @@ func ıf[T any](b bool, t T, f T) T {
 		return t
 	}
 	return f
-}
-
-func contentHash(content []byte) []byte {
-	b1, b2 := sha1.Sum(content), md5.Sum(content)
-	return append(b2[:], b1[:]...)
-}
-
-func contentHashStr(content []byte) (s string) {
-	hash, sbuf := contentHash(content), strings.Builder{}
-	for (len(hash) % 8) != 0 {
-		hash = append(hash, 0)
-	}
-	for i := 0; i < len(hash); i += 8 {
-		_, _ = sbuf.WriteString(strconv.FormatUint(binary.LittleEndian.Uint64(hash[i:i+8]), 36))
-	}
-	return sbuf.String()
 }
 
 func fsDirWalk(dirPath string, onDirEntry func(fsPath string, fsEntry fs.DirEntry)) {
@@ -56,7 +38,7 @@ func fsReadTextFile(filePath string, computeContentHash bool) (string, string) {
 	}
 	content_hash := ""
 	if computeContentHash {
-		content_hash = contentHashStr(data)
+		content_hash = zui.ContentHashStr(data)
 	}
 	return string(data), content_hash
 }

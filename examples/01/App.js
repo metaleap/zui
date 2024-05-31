@@ -15,7 +15,9 @@ export class App extends HTMLElement {
   }
   attributeChangedCallback() {
   }
+  subs_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2 = new Map();
   zuiCreateHTMLElements(shadowRoot) {
+    let tmp_fn;
     const node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2 = document.createElement("h1");
     node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2.append("Welcome!");
     shadowRoot.appendChild(node_h1_0_0_1w6q3ushh5otx2oyeis1ttx2dchsi6xqehpv6z2g18defkdzo0x17605z2);

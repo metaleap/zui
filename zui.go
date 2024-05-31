@@ -85,11 +85,15 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		buf_js.WriteString(newline + newline)
 	}
 
+	buf_js.WriteString(newline + "  subs_" + zuiFileHash + " = new Map();")
+	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
+	buf_js.WriteString(newline + "    let tmp_fn;")
 	if htm_body != nil {
-		buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
-		walkBodyAndEmitJS(&buf_js, 0, htm_body, "shadowRoot", zuiFileHash, top_level_decls)
-		buf_js.WriteString(newline + "  }")
+		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", zuiFileHash, top_level_decls); err != nil {
+			return "", err
+		}
 	}
+	buf_js.WriteString(newline + "  }")
 
 	// register the HTML Custom Element
 	buf_js.WriteString(newline + "}" + newline)
@@ -160,18 +164,26 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	return top_level_decls, nil
 }
 
-func walkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string, allTopLevelDecls map[string]js.IExpr) {
+func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string, allTopLevelDecls map[string]js.IExpr) error {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
 		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
 			case html.TextNode:
-				parts := htmlSplitTextAndJSExprs(child_node.Data, allTopLevelDecls)
+				parts, err := htmlSplitTextAndJSExprs(zuiFilePath, child_node.Data, allTopLevelDecls)
+				if err != nil {
+					return err
+				}
 				for _, part := range parts {
 					switch part := part.(type) {
 					case string:
 						buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
 					case js.INode:
-						buf.WriteString(pref + parentNodeVarName + ".append(" + jsString(part) + ");")
+						js_src := jsString(part)
+						span_var_name := "span_" + ContentHashStr([]byte(js_src))
+						buf.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
+						buf.WriteString(pref + "tmp_fn = function(this) { return " + js_src + " };")
+						buf.WriteString(pref + "this.subs_" + zuiFileHash + ".set(" + span_var_name + ", tmp_fn);")
+						buf.WriteString(pref + span_var_name + ".append(tmp_fn(this));")
 					default:
 						panic(part)
 					}
@@ -180,18 +192,14 @@ func walkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, p
 				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
-					parts := htmlSplitTextAndJSExprs(attr.Val, allTopLevelDecls)
-					attr.Val = ""
-					for _, part := range parts {
-						switch part := part.(type) {
-						case string:
-							attr.Val += part
-						}
-					}
+					buf.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", " + strconv.Quote(attr.Val) + ");")
 				}
-				walkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash, allTopLevelDecls)
+				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileHash, allTopLevelDecls); err != nil {
+					return err
+				}
 				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
 			}
 		}
 	}
+	return nil
 }

@@ -54,7 +54,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 		for _, item := range node.List {
 			name := jsString(item.Binding)
 			if _, is_top_level := me.allTopLevelDecls[name]; is_top_level {
-				if me.err = errors.New(me.zuiFilePath + ": top-level decl '" + name + "' shadowed in top-level func '" + me.funcName + "'"); me.err != nil {
+				if me.err = errors.New(me.zuiFilePath + ": top-level decl '" + name + "' shadowed in func '" + me.funcName + "'"); me.err != nil {
 					return
 				}
 			}
