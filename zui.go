@@ -40,12 +40,12 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	buf_js.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
 	buf_js.WriteString(newline + "  }")
 
-	buf_js.WriteString(newline + "  disconnectedCallback() {")
-	buf_js.WriteString(newline + "  }")
-	buf_js.WriteString(newline + "  adoptedCallback() {")
-	buf_js.WriteString(newline + "  }")
-	buf_js.WriteString(newline + "  attributeChangedCallback() {")
-	buf_js.WriteString(newline + "  }")
+	// buf_js.WriteString(newline + "  disconnectedCallback() {")
+	// buf_js.WriteString(newline + "  }")
+	// buf_js.WriteString(newline + "  adoptedCallback() {")
+	// buf_js.WriteString(newline + "  }")
+	// buf_js.WriteString(newline + "  attributeChangedCallback() {")
+	// buf_js.WriteString(newline + "  }")
 
 	var htm_head, htm_body, htm_script *html.Node
 	for htm_root.FirstChild.Type == html.CommentNode {
@@ -86,20 +86,23 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		buf_js.WriteString(newline + newline)
 	}
 
-	buf_js.WriteString(newline + "  subs_" + ident + " = new Map();")
 	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	buf_js.WriteString(newline + "    let tmp_fn;")
+	used_subs_map := false
 	if htm_body != nil {
-		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", ident, top_level_decls); err != nil {
+		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", ident, top_level_decls, &used_subs_map); err != nil {
 			return "", err
 		}
 	}
 	buf_js.WriteString(newline + "  }")
+	if used_subs_map {
+		buf_js.WriteString(newline + newline + "  subs_" + ident + " = new Map();")
+	}
 
 	// register the HTML Custom Element
-	buf_js.WriteString(newline + "  static TagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
-	buf_js.WriteString(newline + "}" + newline)
-	buf_js.WriteString(newline + "customElements.define(" + zui_class_name + ".TagName, " + zui_class_name + ");")
+	buf_js.WriteString(newline + newline + "  static ZuiTagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
+	buf_js.WriteString(newline + "}")
+	buf_js.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
 
 	return buf_js.String() + newline, err
 }
@@ -166,7 +169,7 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	return top_level_decls, nil
 }
 
-func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileIdent string, allTopLevelDecls map[string]js.IExpr) error {
+func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileIdent string, allTopLevelDecls map[string]js.IExpr, usedSubsMap *bool) error {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
 		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
@@ -190,6 +193,7 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 						buf.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
 						buf.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
 						buf.WriteString(pref + "this.subs_" + zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
+						*usedSubsMap = true
 						buf.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 					default:
 						panic(part)
@@ -217,7 +221,7 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 					}
 					buf.WriteString(");")
 				}
-				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileIdent, allTopLevelDecls); err != nil {
+				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileIdent, allTopLevelDecls, usedSubsMap); err != nil {
 					return err
 				}
 				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
