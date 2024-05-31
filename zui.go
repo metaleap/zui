@@ -129,6 +129,11 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 			name := it.Name.String()
 			assert(name != "")
 			top_level_decls[name] = it
+		case *js.ImportStmt:
+			// Default: "Nested", Module: "./Nested.zui" List: []
+
+			// default:
+			// 	println(">>" + fmt.Sprintf("%T", it) + "<<")
 		}
 	}
 
