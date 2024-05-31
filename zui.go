@@ -99,7 +99,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	// register the HTML Custom Element
 	buf_js.WriteString(newline + "  static TagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
 	buf_js.WriteString(newline + "}" + newline)
-	buf_js.WriteString(newline + "customElements.define(App.TagName, " + zui_class_name + ");")
+	buf_js.WriteString(newline + "customElements.define(" + zui_class_name + ".TagName, " + zui_class_name + ");")
 
 	return buf_js.String() + newline, err
 }
@@ -180,9 +180,9 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 					case string:
 						buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
 					case js.INode:
-						js_src := jsString(part)
+						js_src := strings.TrimSuffix(jsString(part), ";")
 						span_var_name := "txt_" + shortenedLen6(ContentHashStr([]byte(js_src)))
-						buf.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + " }).bind(this);")
+						buf.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
 						buf.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
 						buf.WriteString(pref + "this.subs_" + zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
 						buf.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
@@ -194,7 +194,23 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileIdent
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
-					buf.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", " + strconv.Quote(attr.Val) + ");")
+					parts, err := htmlSplitTextAndJSExprs(zuiFilePath, attr.Val, allTopLevelDecls)
+					if err != nil {
+						return err
+					}
+
+					buf.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", ''")
+					for _, part := range parts {
+						buf.WriteByte('+')
+						switch part := part.(type) {
+						case string:
+							buf.WriteString(strconv.Quote(part))
+						case js.INode:
+							js_src := strings.TrimSuffix(jsString(part), ";")
+							buf.WriteString(js_src)
+						}
+					}
+					buf.WriteString(");")
 				}
 				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileIdent, allTopLevelDecls); err != nil {
 					return err

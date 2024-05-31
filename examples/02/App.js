@@ -26,9 +26,9 @@ greetName = "zui";
     const node_h1_0_0_371ehz = document.createElement("h1");
     node_h1_0_0_371ehz.append("Hello ");
     tmp_fn = (function() { return '' + this.greetName.toUpperCase(); }).bind(this);
-    const txt_qyglru = document.createTextNode(tmp_fn());
-    this.subs_371ehz.set(txt_qyglru, tmp_fn);
-    node_h1_0_0_371ehz.append(txt_qyglru);
+    const txt_3molke = document.createTextNode(tmp_fn());
+    this.subs_371ehz.set(txt_3molke, tmp_fn);
+    node_h1_0_0_371ehz.append(txt_3molke);
     node_h1_0_0_371ehz.append("!");
     shadowRoot.appendChild(node_h1_0_0_371ehz);
   }

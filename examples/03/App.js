@@ -24,8 +24,8 @@ src = "/image.png";
   zuiCreateHTMLElements(shadowRoot) {
     let tmp_fn;
     const node_img_0_0_hwewrd = document.createElement("img");
-    node_img_0_0_hwewrd.setAttribute("alt", "Rick");
-    node_img_0_0_hwewrd.setAttribute("src", "{src}");
+    node_img_0_0_hwewrd.setAttribute("alt", ''+"Rick");
+    node_img_0_0_hwewrd.setAttribute("src", ''+this.src+"");
     shadowRoot.appendChild(node_img_0_0_hwewrd);
   }
   static TagName = "zui-app_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd";
