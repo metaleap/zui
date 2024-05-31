@@ -20,7 +20,7 @@ func jsWalkAndRewriteTopLevelFuncAST(zuiFilePath string, funcName string, funcBo
 		funcName:         funcName,
 		zuiFilePath:      zuiFilePath,
 		gatherMode:       true,
-		rewrites:         map[js.IExpr]*js.DotExpr{},
+		rewrites:         map[js.IExpr]js.IExpr{},
 	}
 	js.Walk(&me, funcBody)
 	if me.err == nil {
@@ -37,7 +37,7 @@ type jsFuncASTRewriteWalker struct {
 	zuiFilePath      string
 
 	err      error
-	rewrites map[js.IExpr]*js.DotExpr
+	rewrites map[js.IExpr]js.IExpr
 }
 
 func (*jsFuncASTRewriteWalker) Exit(js.INode) {}
@@ -49,6 +49,7 @@ func (me *jsFuncASTRewriteWalker) Enter(node js.INode) js.IVisitor {
 	}
 	return ıf(me.err == nil, me, nil)
 }
+
 func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 	switch node := node.(type) {
 	case *js.VarDecl:
@@ -70,219 +71,14 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 		}
 	}
 }
+
 func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {
-	switch node := node.(type) {
-	case *js.PropertyName:
-		if rewrite := me.rewrites[node.Computed]; rewrite != nil {
-			node.Computed = rewrite
+	jsRewrite(node, func(node js.INode) js.INode {
+		if expr, _ := node.(js.IExpr); expr != nil {
+			return ıf(me.err == nil, me.rewrites[expr], nil)
 		}
-	case *js.BindingElement:
-		if rewrite := me.rewrites[node.Default]; rewrite != nil {
-			node.Default = rewrite
-		}
-	case *js.Field:
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-	case *js.ClassDecl:
-		if rewrite := me.rewrites[node.Extends]; rewrite != nil {
-			node.Extends = rewrite
-		}
-	case *js.Element:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.Property:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-	case *js.TemplatePart:
-		if rewrite := me.rewrites[node.Expr]; rewrite != nil {
-			node.Expr = rewrite
-		}
-	case *js.Arg:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.IfStmt:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.DoWhileStmt:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.WhileStmt:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.WithStmt:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.ForStmt:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-		if rewrite := me.rewrites[node.Post]; rewrite != nil {
-			node.Post = rewrite
-		}
-	case *js.ForInStmt:
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.ForOfStmt:
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.SwitchStmt:
-		if rewrite := me.rewrites[node.Init]; rewrite != nil {
-			node.Init = rewrite
-		}
-	case *js.ReturnStmt:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.ThrowStmt:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.ExportStmt:
-		if rewrite := me.rewrites[node.Decl]; rewrite != nil {
-			node.Decl = rewrite
-		}
-	case *js.ExprStmt:
-		if rewrite := me.rewrites[node.Value]; rewrite != nil {
-			node.Value = rewrite
-		}
-	case *js.NewExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-	case *js.GroupExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-	case *js.IndexExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-		if rewrite := me.rewrites[node.Y]; rewrite != nil {
-			node.Y = rewrite
-		}
-	case *js.DotExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-	case *js.CommaExpr:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it]; rewrite != nil {
-				node.List[i] = rewrite
-			}
-		}
-	case *js.UnaryExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-	case *js.BinaryExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-		if rewrite := me.rewrites[node.Y]; rewrite != nil {
-			node.Y = rewrite
-		}
-	case *js.CondExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-		if rewrite := me.rewrites[node.Y]; rewrite != nil {
-			node.Y = rewrite
-		}
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.CallExpr:
-		if rewrite := me.rewrites[node.X]; rewrite != nil {
-			node.X = rewrite
-		}
-		for i, arg := range node.Args.List {
-			if rewrite := me.rewrites[arg.Value]; rewrite != nil {
-				node.Args.List[i].Value = rewrite
-			}
-		}
-	case *js.TemplateExpr:
-		if rewrite := me.rewrites[node.Tag]; rewrite != nil {
-			node.Tag = rewrite
-		}
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Expr]; rewrite != nil {
-				node.List[i].Expr = rewrite
-			}
-		}
-	case *js.Args:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Value]; rewrite != nil {
-				node.List[i].Value = rewrite
-			}
-		}
-	case *js.CaseClause:
-		if rewrite := me.rewrites[node.Cond]; rewrite != nil {
-			node.Cond = rewrite
-		}
-	case *js.BindingArray:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Default]; rewrite != nil {
-				node.List[i].Default = rewrite
-			}
-		}
-	case *js.BindingObject:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Value.Default]; rewrite != nil {
-				node.List[i].Value.Default = rewrite
-			}
-			if it.Key != nil {
-				if rewrite := me.rewrites[it.Key.Computed]; rewrite != nil {
-					node.List[i].Key.Computed = rewrite
-				}
-			}
-		}
-	case *js.VarDecl:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Default]; rewrite != nil {
-				node.List[i].Default = rewrite
-			}
-		}
-	case *js.ArrayExpr:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Value]; rewrite != nil {
-				node.List[i].Value = rewrite
-			}
-		}
-	case *js.ObjectExpr:
-		for i, it := range node.List {
-			if rewrite := me.rewrites[it.Value]; rewrite != nil {
-				node.List[i].Value = rewrite
-			}
-			if rewrite := me.rewrites[it.Init]; rewrite != nil {
-				node.List[i].Init = rewrite
-			}
-			if rewrite := me.rewrites[it.Name.Computed]; rewrite != nil {
-				node.List[i].Name.Computed = rewrite
-			}
-		}
-	}
+		return nil
+	})
 }
 
 func jsWalkAndRewriteWholeAST(ast *js.AST, zuiFilePath string) error {
@@ -342,12 +138,15 @@ func (me *jsWholeASTRewriter) gather(node js.INode) {
 }
 
 func (me *jsWholeASTRewriter) rewrite(node js.INode) {
-	jsRewrite[js.INode](node, func(node js.INode) js.INode {
-		return me.rewrites[node]
+	jsRewrite(node, func(node js.INode) js.INode {
+		return ıf(me.err == nil, me.rewrites[node], nil)
 	})
 }
 
-func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
+func jsRewrite(node js.INode, rewrite func(js.INode) js.INode) {
+	if node == nil {
+		return
+	}
 	switch node := node.(type) {
 	case *js.Var:
 		if re, _ := rewrite(node.Link).(*js.Var); re != nil {
