@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   }
 
 
-src = zuiPath`03/image.png`;
+src = zuiPath`./image.png`;
 
 
   zuiCreateHTMLElements(shadowRoot) {

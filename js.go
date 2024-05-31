@@ -483,7 +483,7 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Computed).(js.IExpr); re != nil {
 			node.Computed = re
 		}
-		if re, _ := rewrite(node.Literal).(*js.LiteralExpr); re != nil {
+		if re, _ := rewrite(&node.Literal).(*js.LiteralExpr); re != nil {
 			node.Literal = *re
 		}
 	case *js.BindingArray:
@@ -496,7 +496,7 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Key).(*js.PropertyName); re != nil {
 			node.Key = re
 		}
-		if re, _ := rewrite(node.Value).(*js.BindingElement); re != nil {
+		if re, _ := rewrite(&node.Value).(*js.BindingElement); re != nil {
 			node.Value = *re
 		}
 	case *js.BindingObject:
@@ -525,7 +525,7 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			}
 		}
 	case *js.FuncDecl:
-		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+		if re, _ := rewrite(&node.Body).(*js.BlockStmt); re != nil {
 			node.Body = *re
 		}
 		if re, _ := rewrite(node.Name).(*js.Var); re != nil {
@@ -537,10 +537,10 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			}
 		}
 	case *js.MethodDecl:
-		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+		if re, _ := rewrite(&node.Body).(*js.BlockStmt); re != nil {
 			node.Body = *re
 		}
-		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+		if re, _ := rewrite(&node.Name).(*js.PropertyName); re != nil {
 			node.Name = *re
 		}
 		for i := range node.Params.List {
@@ -552,14 +552,14 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
 			node.Init = re
 		}
-		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+		if re, _ := rewrite(&node.Name).(*js.PropertyName); re != nil {
 			node.Name = *re
 		}
 	case *js.ClassElement:
 		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
 			node.Init = re
 		}
-		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+		if re, _ := rewrite(&node.Name).(*js.PropertyName); re != nil {
 			node.Name = *re
 		}
 		if re, _ := rewrite(node.StaticBlock).(*js.BlockStmt); re != nil {
@@ -568,7 +568,7 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 		if re, _ := rewrite(node.Method).(*js.MethodDecl); re != nil {
 			node.Method = re
 		}
-		if re, _ := rewrite(node.Field).(*js.Field); re != nil {
+		if re, _ := rewrite(&node.Field).(*js.Field); re != nil {
 			node.Field = *re
 		}
 	case *js.ClassDecl:
@@ -584,25 +584,125 @@ func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 			}
 		}
 	case *js.Element:
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
 	case *js.ArrayExpr:
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.Element); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.Property:
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
+		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+			node.Name = re
+		}
 	case *js.ObjectExpr:
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.Property); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.TemplatePart:
+		if re, _ := rewrite(node.Expr).(js.IExpr); re != nil {
+			node.Expr = re
+		}
 	case *js.TemplateExpr:
+		if re, _ := rewrite(node.Tag).(js.IExpr); re != nil {
+			node.Tag = re
+		}
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.TemplatePart); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.GroupExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
 	case *js.IndexExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(node.Y).(js.IExpr); re != nil {
+			node.Y = re
+		}
 	case *js.DotExpr:
-	case *js.NewTargetExpr:
-	case *js.ImportMetaExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(&node.Y).(*js.LiteralExpr); re != nil {
+			node.Y = *re
+		}
 	case *js.Arg:
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
 	case *js.Args:
+		for i := range node.List {
+			if re, _ := rewrite(&node.List[i]).(*js.Arg); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.NewExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(node.Args).(*js.Args); re != nil {
+			node.Args = re
+		}
 	case *js.CallExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(&node.Args).(*js.Args); re != nil {
+			node.Args = *re
+		}
 	case *js.UnaryExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
 	case *js.BinaryExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(node.Y).(js.IExpr); re != nil {
+			node.Y = re
+		}
 	case *js.CondExpr:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
+		if re, _ := rewrite(node.Y).(js.IExpr); re != nil {
+			node.Y = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
 	case *js.YieldExpr:
-	case *js.ArrowFunc:
+		if re, _ := rewrite(node.X).(js.IExpr); re != nil {
+			node.X = re
+		}
 	case *js.CommaExpr:
+		for i := range node.List {
+			if re, _ := rewrite(node.List[i]).(js.IExpr); re != nil {
+				node.List[i] = re
+			}
+		}
+	case *js.ArrowFunc:
+		if re, _ := rewrite(&node.Body).(*js.BlockStmt); re != nil {
+			node.Body = *re
+		}
+		for i := range node.Params.List {
+			if re, _ := rewrite(&node.Params.List[i]).(*js.BindingElement); re != nil {
+				node.Params.List[i] = *re
+			}
+		}
 	}
 }
