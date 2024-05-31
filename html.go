@@ -69,7 +69,7 @@ func htmlSplitTextAndJSExprs(zuiFilePath string, htmlText string, allTopLevelDec
 		if err != nil {
 			return nil, errors.New(zuiFilePath + ": " + err.Error() + " in JS expr '" + src_js + "'")
 		}
-		if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, src_js, &js_ast.BlockStmt, allTopLevelDecls); err != nil {
+		if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, src_js, &js_ast.BlockStmt, allTopLevelDecls); err != nil {
 			return nil, err
 		}
 		ret = append(ret, js_ast)

@@ -17,7 +17,7 @@ func main() {
 			zui_file_src, zui_file_hash := fsReadTextFile(fsPath, true)
 
 			js_file_path := fsPathSwapExt(fsPath, ".zui", ".js")
-			if (!force) && fsIsFile(js_file_path) {
+			if (!force) && zui.FsIsFile(js_file_path) {
 				js_file_src, _ := fsReadTextFile(js_file_path, false)
 				if strings.HasPrefix(js_file_src, zui.FirstLineJS(fsPath, zui_file_hash)) {
 					// .js file is already up-to-date wrt the .zui file

@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/binary"
+	"io/fs"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -39,4 +41,19 @@ func ContentHashStr(content []byte) (s string) {
 
 func shortenedLen6(zuiFileHash string) string {
 	return zuiFileHash[:3] + zuiFileHash[len(zuiFileHash)-3:]
+}
+
+func FsIsDir(dirPath string) bool   { return fsIs(dirPath, fs.FileInfo.IsDir, true) }
+func FsIsFile(filePath string) bool { return fsIs(filePath, fs.FileInfo.IsDir, false) }
+func fsIs(path string, check func(fs.FileInfo) bool, expect bool) bool {
+	fs_info := fsStat(path)
+	return (fs_info != nil) && (expect == check(fs_info))
+}
+func fsStat(path string) fs.FileInfo {
+	fs_info, err := os.Stat(path)
+	is_not_exist := os.IsNotExist(err)
+	if err != nil && !is_not_exist {
+		panic(err)
+	}
+	return ıf(is_not_exist, nil, fs_info)
 }

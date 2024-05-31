@@ -112,6 +112,9 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	if err != nil {
 		return nil, errors.New(zuiFilePath + ": " + err.Error())
 	}
+	if err = jsWalkAndRewriteWholeAST(js_ast, zuiFilePath); err != nil {
+		return nil, err
+	}
 
 	// capture all top-level decl names first before any emits, because func AST rewrites need them
 	top_level_decls := map[string]js.IExpr{}
@@ -142,7 +145,7 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 		switch it := stmt.(type) {
 		case *js.FuncDecl:
 			name := it.Name.String()
-			if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+			if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
 				return nil, err
 			}
 			src_fn := jsString(it)
@@ -155,12 +158,12 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
-						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+						if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
 							return nil, err
 						}
 						item.Default = it
 					case *js.ArrowFunc:
-						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+						if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
 							return nil, err
 						}
 						item.Default = it

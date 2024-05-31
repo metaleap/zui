@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: mg4vd2zzs9yz37wx2hcrry9xtxn0oo72myx7wicphg7t8np899sglkr
+// Source file content hash: 224abhbqzum0a1ljqpikvf8s3y2uqqiwf578t4s2b1paxznc07jc1eg08e2
 
 export class App extends HTMLElement {
   constructor() {
@@ -11,17 +11,17 @@ export class App extends HTMLElement {
   }
 
 
-src = "03/image.png";
+src = zuiPath`03/image.png`;
 
 
   zuiCreateHTMLElements(shadowRoot) {
     let tmp_fn;
-    const node_img_0_0_mg4lkr = document.createElement("img");
-    node_img_0_0_mg4lkr.setAttribute("alt", ''+"Rick");
-    node_img_0_0_mg4lkr.setAttribute("src", ''+this.src+"");
-    shadowRoot.appendChild(node_img_0_0_mg4lkr);
+    const node_img_0_0_2248e2 = document.createElement("img");
+    node_img_0_0_2248e2.setAttribute("alt", ''+"Rick");
+    node_img_0_0_2248e2.setAttribute("src", ''+this.src+"");
+    shadowRoot.appendChild(node_img_0_0_2248e2);
   }
 
-  static ZuiTagName = "zui-app_mg4vd2zzs9yz37wx2hcrry9xtxn0oo72myx7wicphg7t8np899sglkr";
+  static ZuiTagName = "zui-app_224abhbqzum0a1ljqpikvf8s3y2uqqiwf578t4s2b1paxznc07jc1eg08e2";
 }
 customElements.define(App.ZuiTagName, App);
