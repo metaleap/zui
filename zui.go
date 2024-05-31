@@ -18,7 +18,7 @@ func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
 	var buf_js strings.Builder // our result JS src we're building
-	zuiFileHash = "tmp"
+	ident := shortenedLen6(zuiFileHash)
 
 	htm_root, err := html.Parse(strings.NewReader(strings.TrimSpace(zuiFileSrc)))
 	if err != nil {
@@ -86,19 +86,20 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		buf_js.WriteString(newline + newline)
 	}
 
-	buf_js.WriteString(newline + "  subs_" + zuiFileHash + " = new Map();")
+	buf_js.WriteString(newline + "  subs_" + ident + " = new Map();")
 	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	buf_js.WriteString(newline + "    let tmp_fn;")
 	if htm_body != nil {
-		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", zuiFileHash, top_level_decls); err != nil {
+		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", ident, top_level_decls); err != nil {
 			return "", err
 		}
 	}
 	buf_js.WriteString(newline + "  }")
 
 	// register the HTML Custom Element
+	buf_js.WriteString(newline + "  static TagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
 	buf_js.WriteString(newline + "}" + newline)
-	buf_js.WriteString(newline + "customElements.define('zui-" + strings.ToLower(zui_class_name) + "_" + zuiFileHash + "', " + zui_class_name + ");")
+	buf_js.WriteString(newline + "customElements.define(App.TagName, " + zui_class_name + ");")
 
 	return buf_js.String() + newline, err
 }
@@ -165,7 +166,7 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	return top_level_decls, nil
 }
 
-func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string, allTopLevelDecls map[string]js.IExpr) error {
+func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileIdent string, allTopLevelDecls map[string]js.IExpr) error {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
 		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
@@ -180,22 +181,22 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 						buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
 					case js.INode:
 						js_src := jsString(part)
-						span_var_name := "span_" + ContentHashStr([]byte(js_src))
-						buf.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
-						buf.WriteString(pref + "tmp_fn = (function() { return " + js_src + " }).bind(this);")
-						buf.WriteString(pref + "this.subs_" + zuiFileHash + ".set(" + span_var_name + ", tmp_fn);")
-						buf.WriteString(pref + span_var_name + ".append(tmp_fn(this));")
+						span_var_name := "txt_" + shortenedLen6(ContentHashStr([]byte(js_src)))
+						buf.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + " }).bind(this);")
+						buf.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
+						buf.WriteString(pref + "this.subs_" + zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
+						buf.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 					default:
 						panic(part)
 					}
 				}
 			case html.ElementNode:
-				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
+				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileIdent
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
 					buf.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", " + strconv.Quote(attr.Val) + ");")
 				}
-				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileHash, allTopLevelDecls); err != nil {
+				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileIdent, allTopLevelDecls); err != nil {
 					return err
 				}
 				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")

@@ -36,3 +36,7 @@ func ContentHashStr(content []byte) (s string) {
 	}
 	return sbuf.String()
 }
+
+func shortenedLen6(zuiFileHash string) string {
+	return zuiFileHash[:3] + zuiFileHash[len(zuiFileHash)-3:]
+}
