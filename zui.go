@@ -141,8 +141,10 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
 		switch it := stmt.(type) {
 		case *js.FuncDecl:
-			// name := it.Name.String()
-			walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
+			name := it.Name.String()
+			if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+				return err
+			}
 			src_fn := jsString(it)
 			assert(strings.HasPrefix(src_fn, "function "))
 			buf.WriteString("\n" + src_fn[len("function "):])
@@ -153,10 +155,14 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
-						walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
+						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+							return err
+						}
 						item.Default = it
 					case *js.ArrowFunc:
-						walkAndRewriteTopLevelFuncAST(it.Params, &it.Body, top_level_decls)
+						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
+							return err
+						}
 						item.Default = it
 					}
 					buf.WriteString(" = " + jsString(item.Default))

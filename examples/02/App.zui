@@ -2,9 +2,25 @@
 <script>
     let greetName = "ZUI";
     let fooB = () => {
+        let mooha = () => {
+            if (true) {
+                while (false) {
+                    console.log(123);
+                }
+            }
+        };
+
         console.log(greetName + " is here but " + wot + " aint");
     };
     let daFunc = function () {
+        function foobie() {
+            if (true) {
+                while (false) {
+                    console.log(123);
+                }
+            }
+        }
+
         return greetName.toUpperCase();
     };
 
