@@ -347,39 +347,230 @@ func (me *jsWholeASTRewriter) rewrite(node js.INode) {
 func jsRewrite[T js.INode](node js.INode, rewrite func(js.INode) js.INode) {
 	switch node := node.(type) {
 	case *js.Var:
-		if rewrite, _ := rewrite(node.Link).(*js.Var); rewrite != nil {
-			node.Link = rewrite
+		if re, _ := rewrite(node.Link).(*js.Var); re != nil {
+			node.Link = re
 		}
 	case *js.BlockStmt:
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(js.IStmt); re != nil {
+				node.List[i] = re
+			}
+		}
 	case *js.ExprStmt:
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
 	case *js.IfStmt:
+		if re, _ := rewrite(node.Body).(js.IStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Else).(js.IStmt); re != nil {
+			node.Else = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
 	case *js.DoWhileStmt:
+		if re, _ := rewrite(node.Body).(js.IStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
 	case *js.WhileStmt:
+		if re, _ := rewrite(node.Body).(js.IStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
 	case *js.ForStmt:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
+		if re, _ := rewrite(node.Post).(js.IExpr); re != nil {
+			node.Post = re
+		}
 	case *js.ForInStmt:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
 	case *js.ForOfStmt:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
 	case *js.CaseClause:
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(js.IStmt); re != nil {
+				node.List[i] = re
+			}
+		}
 	case *js.SwitchStmt:
-	case *js.BranchStmt:
+		if re, _ := rewrite(node.Init).(js.IExpr); re != nil {
+			node.Init = re
+		}
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.CaseClause); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.ReturnStmt:
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
 	case *js.WithStmt:
+		if re, _ := rewrite(node.Body).(js.IStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Cond).(js.IExpr); re != nil {
+			node.Cond = re
+		}
 	case *js.LabelledStmt:
+		if re, _ := rewrite(node.Value).(js.IStmt); re != nil {
+			node.Value = re
+		}
 	case *js.ThrowStmt:
+		if re, _ := rewrite(node.Value).(js.IExpr); re != nil {
+			node.Value = re
+		}
 	case *js.TryStmt:
-	case *js.DebuggerStmt:
-	case *js.Alias:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = re
+		}
+		if re, _ := rewrite(node.Catch).(*js.BlockStmt); re != nil {
+			node.Catch = re
+		}
+		if re, _ := rewrite(node.Finally).(*js.BlockStmt); re != nil {
+			node.Finally = re
+		}
 	case *js.ImportStmt:
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.Alias); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.ExportStmt:
-	case *js.DirectivePrologueStmt:
+		if re, _ := rewrite(node.Decl).(js.IExpr); re != nil {
+			node.Decl = re
+		}
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.Alias); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.PropertyName:
+		if re, _ := rewrite(node.Computed).(js.IExpr); re != nil {
+			node.Computed = re
+		}
+		if re, _ := rewrite(node.Literal).(*js.LiteralExpr); re != nil {
+			node.Literal = *re
+		}
 	case *js.BindingArray:
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.BindingObjectItem:
+		if re, _ := rewrite(node.Key).(*js.PropertyName); re != nil {
+			node.Key = re
+		}
+		if re, _ := rewrite(node.Value).(*js.BindingElement); re != nil {
+			node.Value = *re
+		}
 	case *js.BindingObject:
+		if re, _ := rewrite(node.Rest).(*js.Var); re != nil {
+			node.Rest = re
+		}
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.BindingObjectItem); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.BindingElement:
+		if re, _ := rewrite(node.Default).(js.IExpr); re != nil {
+			node.Default = re
+		}
 	case *js.VarDecl:
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.Params:
+		for i, it := range node.List {
+			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+				node.List[i] = *re
+			}
+		}
 	case *js.FuncDecl:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = *re
+		}
+		if re, _ := rewrite(node.Name).(*js.Var); re != nil {
+			node.Name = re
+		}
+		for i, it := range node.Params.List {
+			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+				node.Params.List[i] = *re
+			}
+		}
 	case *js.MethodDecl:
+		if re, _ := rewrite(node.Body).(*js.BlockStmt); re != nil {
+			node.Body = *re
+		}
+		if re, _ := rewrite(node.Name).(*js.PropertyName); re != nil {
+			node.Name = *re
+		}
+		for i, it := range node.Params.List {
+			if re, _ := rewrite(it).(*js.BindingElement); re != nil {
+				node.Params.List[i] = *re
+			}
+		}
 	case *js.Field:
+	case *js.ClassElement:
+	case *js.ClassDecl:
+	case *js.Element:
+	case *js.ArrayExpr:
+	case *js.Property:
+	case *js.ObjectExpr:
+	case *js.TemplatePart:
+	case *js.TemplateExpr:
+	case *js.GroupExpr:
+	case *js.IndexExpr:
+	case *js.DotExpr:
+	case *js.NewTargetExpr:
+	case *js.ImportMetaExpr:
+	case *js.Arg:
+	case *js.Args:
+	case *js.NewExpr:
+	case *js.CallExpr:
+	case *js.UnaryExpr:
+	case *js.BinaryExpr:
+	case *js.CondExpr:
+	case *js.YieldExpr:
+	case *js.ArrowFunc:
+	case *js.CommaExpr:
 	}
 }
