@@ -1,6 +1,6 @@
 <!-- https://learn.svelte.dev/tutorial/dynamic-attributes -->
 <script>
-    let src = zuiPath`./image.png`;
+    let src = zuiPath`./imag.png`;
 </script>
 
 <img alt="Rick" src={src} />

@@ -292,7 +292,10 @@ func jsWalkAndRewriteWholeAST(ast *js.AST, zuiFilePath string) error {
 		gatherMode:  true,
 		rewrites:    map[js.INode]js.INode{},
 	}
-	js.Walk(&me, &ast.BlockStmt)
+	if js.Walk(&me, &ast.BlockStmt); me.err == nil {
+		me.gatherMode = false
+		js.Walk(&me, &ast.BlockStmt)
+	}
 	return me.err
 }
 
@@ -328,7 +331,7 @@ func (me *jsWholeASTRewriter) gather(node js.INode) {
 				if file_exists_from_zui_file_vantage {
 					me.rewrites[node] = &js.LiteralExpr{
 						TokenType: js.StringToken,
-						Data:      []byte(file_path_from_cur_dir_vantage),
+						Data:      []byte("'" + file_path_from_cur_dir_vantage + "'"),
 					}
 				} else {
 					me.err = errors.New(me.zuiFilePath + ": the zuiPath '" + tail + "' does not exist")
