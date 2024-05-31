@@ -1,6 +1,7 @@
 package zui
 
 import (
+	"errors"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -17,4 +18,16 @@ func htmlSrc(buf *strings.Builder, node *html.Node) {
 		}
 		buf.WriteString("</" + node.Data + ">")
 	}
+}
+
+func htmlTopLevelScriptElement(zuiFilePath string, hayStack *html.Node, curScript *html.Node) (*html.Node, error) {
+	for node := hayStack.FirstChild; node != nil; node = node.NextSibling {
+		if node.Type == html.ElementNode && node.Data == "script" {
+			if curScript != nil {
+				return nil, errors.New(zuiFilePath + ": " + errMsgMultipleTopLevelScriptElems)
+			}
+			curScript = node
+		}
+	}
+	return curScript, nil
 }

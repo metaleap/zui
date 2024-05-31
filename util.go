@@ -6,3 +6,9 @@ func ıf[T any](b bool, t T, f T) T {
 	}
 	return f
 }
+
+func assert(b bool) {
+	if !b {
+		panic("assertion failure")
+	}
+}

@@ -1,8 +1,15 @@
 <script>
     let greetName = "ZUI";
+    let fooB = () => {
+        console.log(greetName + " is here but " + wot + " aint");
+    };
+    let daFunc = function () {
+        return greetName.toUpperCase();
+    };
 
     function foo() {
-        console.log("FOOBAR " + greetName);
+        console.log("FOOBAR " + greetName + blaBla);
+        console.log("WhooHa");
     }
 </script>
 

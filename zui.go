@@ -21,41 +21,37 @@ func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
-	var buf strings.Builder
+	var buf_js strings.Builder // our result JS src we're building
 
 	htm_root, err := html.Parse(strings.NewReader(strings.TrimSpace(zuiFileSrc)))
 	if err != nil {
 		return "", err
 	}
 
-	if false {
-		htmlSrc(&buf, htm_root)
-		println(buf.String())
-		buf.Reset()
-	}
-
-	buf.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
+	// initial basic mostly-static JS emits
 	zui_file_name := filepath.Base(zuiFilePath)
 	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
-	buf.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
+	buf_js.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
+	buf_js.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
 
-	buf.WriteString(newline + "  constructor() {")
-	buf.WriteString(newline + "    super();")
-	buf.WriteString(newline + "  }")
+	buf_js.WriteString(newline + "  constructor() {")
+	buf_js.WriteString(newline + "    super();")
+	buf_js.WriteString(newline + "  }")
 
-	buf.WriteString(newline + "  connectedCallback() {")
-	buf.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
-	buf.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
-	buf.WriteString(newline + "  }")
+	buf_js.WriteString(newline + "  connectedCallback() {")
+	buf_js.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
+	buf_js.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
+	buf_js.WriteString(newline + "  }")
 
-	buf.WriteString(newline + "  disconnectedCallback() {")
-	buf.WriteString(newline + "  }")
-	buf.WriteString(newline + "  adoptedCallback() {")
-	buf.WriteString(newline + "  }")
-	buf.WriteString(newline + "  attributeChangedCallback() {")
-	buf.WriteString(newline + "  }")
+	buf_js.WriteString(newline + "  disconnectedCallback() {")
+	buf_js.WriteString(newline + "  }")
+	buf_js.WriteString(newline + "  adoptedCallback() {")
+	buf_js.WriteString(newline + "  }")
+	buf_js.WriteString(newline + "  attributeChangedCallback() {")
+	buf_js.WriteString(newline + "  }")
 
 	var htm_head, htm_body, htm_script *html.Node
+	// find the <head> and <body> first, either may have the top-level <script>
 	for node := htm_root.FirstChild.FirstChild; node != nil; node = node.NextSibling {
 		if node.Type == html.ElementNode && node.Data == "head" {
 			htm_head = node
@@ -64,114 +60,115 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 			htm_body = node
 		}
 	}
-
+	// now look for the <script> in the <head>
 	if htm_head != nil {
-		for node := htm_head.FirstChild; node != nil; node = node.NextSibling {
-			if node.Type == html.ElementNode && node.Data == "script" {
-				if htm_script != nil {
-					return "", errors.New(zuiFilePath + ": " + errMsgMultipleTopLevelScriptElems)
-				}
-				htm_script = node
-			}
-		}
-	}
-
-	buf.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
-	if htm_body != nil {
-		for node := htm_body.FirstChild; node != nil; node = node.NextSibling {
-			if node.Type == html.ElementNode && node.Data == "script" {
-				if htm_script != nil {
-					return "", errors.New(zuiFilePath + ": " + errMsgMultipleTopLevelScriptElems)
-				}
-				htm_script = node
-			}
-		}
-
-		htmlWalkBodyAndEmitJS(&buf, 0, htm_body, "shadowRoot", zuiFileHash)
-	}
-	buf.WriteString(newline + "  }")
-
-	if htm_script != nil && htm_script.FirstChild != nil &&
-		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
-		buf.WriteString(newline + newline)
-		if err := htmlWalkScriptAndEmitJS(zuiFilePath, &buf, htm_script.FirstChild.Data); err != nil {
+		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_head, htm_script)
+		if err != nil {
 			return "", err
 		}
-		buf.WriteString(newline + newline)
 	}
 
-	buf.WriteString(newline + "}")
-	buf.WriteString(newline + "customElements.define('zui-" + strings.ToLower(zui_class_name) + "_" + zuiFileHash + "', " + zui_class_name + ");")
+	// deal with the <body>
+	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
+	if htm_body != nil { // also look for the top-level <script> in the <body>, which happens if it's placed after other markup but still top-level
+		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_body, htm_script)
+		if err != nil {
+			return "", err
+		}
+		// walk the <body> to generate JS DOM construction code
+		walkBodyAndEmitJS(&buf_js, 0, htm_body, "shadowRoot", zuiFileHash)
+	}
+	buf_js.WriteString(newline + "  }")
 
-	return buf.String() + "\n", err
+	// deal with the <script>
+	if htm_script != nil && htm_script.FirstChild != nil &&
+		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
+		buf_js.WriteString(newline + newline) // extra new lines because these emits are unindented
+		if err := walkScriptAndEmitJS(zuiFilePath, &buf_js, htm_script.FirstChild.Data); err != nil {
+			return "", err
+		}
+		buf_js.WriteString(newline + newline)
+	}
+
+	// register the HTML Custom Element
+	buf_js.WriteString(newline + "}" + newline)
+	buf_js.WriteString(newline + "customElements.define('zui-" + strings.ToLower(zui_class_name) + "_" + zuiFileHash + "', " + zui_class_name + ");")
+
+	return buf_js.String() + newline, err
 }
 
-func htmlWalkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string) {
+func walkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string) {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
-		child_nodes := []*html.Node{parentNode.FirstChild}
-		for next := parentNode.FirstChild.NextSibling; next != nil; next = next.NextSibling {
-			child_nodes = append(child_nodes, next)
-		}
-		for i, child_node := range child_nodes {
+		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
 			case html.TextNode:
 				buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(child_node.Data) + ");")
 			case html.ElementNode:
 				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
-				htmlWalkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash)
+				walkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash)
 				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
 			}
 		}
 	}
 }
 
-func htmlWalkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) error {
+func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) error {
 	js_ast, err := js.Parse(parse.NewInputString(scriptNodeText), js.Options{})
 	if err != nil {
 		return errors.New(zuiFilePath + ": " + err.Error())
 	}
 
-	top_level_vars := map[string]js.BindingElement{}
+	// capture all top-level decl names first before any emits, because func AST rewrites need them
+	top_level_decls := map[string]js.IExpr{}
 	for _, stmt := range js_ast.List {
-		decl, _ := stmt.(*js.VarDecl)
-		if decl == nil {
-			continue
-		}
-		for _, item := range decl.List {
-			if item.Binding != nil {
+		switch it := stmt.(type) {
+		case *js.VarDecl:
+			for _, item := range it.List {
+				assert(item.Binding != nil)
 				name := jsString(item.Binding)
-				top_level_vars[name] = item
+				assert(name != "")
+				top_level_decls[name] = item.Default
+			}
+		case *js.FuncDecl:
+			assert(it.Name != nil)
+			name := it.Name.String()
+			assert(name != "")
+			top_level_decls[name] = it
+		}
+	}
+
+	// now, emit the top-level decls, rewriting all func ASTs
+	for _, stmt := range js_ast.List { // not walking the map to preserve original ordering
+		switch it := stmt.(type) {
+		case *js.FuncDecl:
+			// name := it.Name.String()
+			walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+			src_fn := jsString(it)
+			assert(strings.HasPrefix(src_fn, "function "))
+			buf.WriteString("\n" + src_fn[len("function "):])
+		case *js.VarDecl:
+			for _, item := range it.List {
+				name := jsString(item.Binding)
 				buf.WriteString("\n" + name)
 				if item.Default != nil {
+					switch it := item.Default.(type) {
+					case *js.FuncDecl:
+						walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+						item.Default = it
+					case *js.ArrowFunc:
+						walkAndRewriteTopLevelFuncAST(&it.Params, &it.Body, top_level_decls)
+						item.Default = it
+					}
 					buf.WriteString(" = " + jsString(item.Default))
 				}
 				buf.WriteByte(';')
 			}
 		}
 	}
-
-	for _, stmt := range js_ast.List {
-		fn, _ := stmt.(*js.FuncDecl)
-		if fn == nil {
-			continue
-		}
-		if fn.Name == nil || len(fn.Name.Name()) == 0 {
-			return errors.New(zuiFilePath + ": all top-level functions need a name, since they become class methods")
-		}
-
-		src_fn := jsString(fn)
-		if !strings.HasPrefix(src_fn, "function ") {
-			return errors.New(zuiFilePath + ": top-level function " + fn.Name.String() + " expected to start with `function` declaration")
-		}
-		buf.WriteString("\n" + src_fn[len("function "):])
-	}
-
 	return nil
 }
 
-func jsString(node js.INode) string {
-	var buf strings.Builder
-	node.JS(&buf)
-	return buf.String()
+func walkAndRewriteTopLevelFuncAST(fnParams *js.Params, fnBody *js.BlockStmt, allTopLevelDecls map[string]js.IExpr) {
+
 }
