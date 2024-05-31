@@ -1,6 +1,6 @@
 <!-- https://learn.svelte.dev/tutorial/dynamic-attributes -->
 <script>
-    let src = "/image.png";
+    let src = "03/image.png";
 </script>
 
 <img alt="Rick" src={src} />

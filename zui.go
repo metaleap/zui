@@ -171,6 +171,11 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
 			case html.TextNode:
+				if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
+					buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(child_node.Data) + ");")
+					continue
+				}
+
 				parts, err := htmlSplitTextAndJSExprs(zuiFilePath, child_node.Data, allTopLevelDecls)
 				if err != nil {
 					return err
