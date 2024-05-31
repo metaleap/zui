@@ -15,15 +15,15 @@ export class App extends HTMLElement {
   }
   attributeChangedCallback() {
   }
-  zuiCreateHTMLElements(shadowRoot) {
-    const node_img_0_0_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd = document.createElement("img");
-    shadowRoot.appendChild(node_img_0_0_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd);
-  }
 
 
 src = "/image.png";
 
 
+  zuiCreateHTMLElements(shadowRoot) {
+    const node_img_0_0_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd = document.createElement("img");
+    shadowRoot.appendChild(node_img_0_0_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd);
+  }
 }
 
 customElements.define('zui-app_hwegtuzv7jdg135l7pijo3c311nx220g238vuw1z5tmqk8o59jx1h3pwrd', App);

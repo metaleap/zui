@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"golang.org/x/net/html"
+
+	"github.com/tdewolff/parse/v2/js"
 )
 
 func htmlSrc(node *html.Node) string {
@@ -38,4 +40,8 @@ func htmlTopLevelScriptElement(zuiFilePath string, hayStack *html.Node, curScrip
 		}
 	}
 	return curScript, nil
+}
+
+func htmlSplitTextAndJSExprs(htmlText string, allTopLevelDecls map[string]js.IExpr) (ret []any) {
+	return
 }

@@ -50,7 +50,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	for htm_root.FirstChild.Type == html.CommentNode {
 		htm_root.FirstChild = htm_root.FirstChild.NextSibling
 	}
-	// find the <head> and <body> first, either may have the top-level <script>
+	// find the <head> and <body> first
 	for node := htm_root.FirstChild.FirstChild; node != nil; node = node.NextSibling {
 		if node.Type == html.ElementNode && node.Data == "head" {
 			htm_head = node
@@ -66,27 +66,29 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 			return "", err
 		}
 	}
-
-	// deal with the <body>
-	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
-	if htm_body != nil { // also look for the top-level <script> in the <body> (found there instead of <head> if it's placed after other markup but still top-level)
+	// also look for the top-level <script> in the <body> (found there instead of <head> if it's placed after other markup but still top-level)
+	if htm_body != nil {
 		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_body, htm_script)
 		if err != nil {
 			return "", err
 		}
-		// walk the <body> to generate JS DOM construction code
-		walkBodyAndEmitJS(&buf_js, 0, htm_body, "shadowRoot", zuiFileHash)
 	}
-	buf_js.WriteString(newline + "  }")
 
 	// deal with the <script>
+	top_level_decls := map[string]js.IExpr{}
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
 		buf_js.WriteString(newline + newline) // extra new lines because these emits are unindented
-		if err := walkScriptAndEmitJS(zuiFilePath, &buf_js, htm_script.FirstChild.Data); err != nil {
+		if top_level_decls, err = walkScriptAndEmitJS(zuiFilePath, &buf_js, htm_script.FirstChild.Data); err != nil {
 			return "", err
 		}
 		buf_js.WriteString(newline + newline)
+	}
+
+	if htm_body != nil {
+		buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
+		walkBodyAndEmitJS(&buf_js, 0, htm_body, "shadowRoot", zuiFileHash, top_level_decls)
+		buf_js.WriteString(newline + "  }")
 	}
 
 	// register the HTML Custom Element
@@ -96,26 +98,10 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	return buf_js.String() + newline, err
 }
 
-func walkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string) {
-	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
-		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
-			switch child_node.Type {
-			case html.TextNode:
-				buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(child_node.Data) + ");")
-			case html.ElementNode:
-				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
-				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
-				walkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash)
-				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
-			}
-		}
-	}
-}
-
-func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) error {
+func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) (map[string]js.IExpr, error) {
 	js_ast, err := js.Parse(parse.NewInputString(scriptNodeText), js.Options{})
 	if err != nil {
-		return errors.New(zuiFilePath + ": " + err.Error())
+		return nil, errors.New(zuiFilePath + ": " + err.Error())
 	}
 
 	// capture all top-level decl names first before any emits, because func AST rewrites need them
@@ -143,7 +129,7 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 		case *js.FuncDecl:
 			name := it.Name.String()
 			if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-				return err
+				return nil, err
 			}
 			src_fn := jsString(it)
 			assert(strings.HasPrefix(src_fn, "function "))
@@ -156,12 +142,12 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
 						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-							return err
+							return nil, err
 						}
 						item.Default = it
 					case *js.ArrowFunc:
 						if err = walkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-							return err
+							return nil, err
 						}
 						item.Default = it
 					}
@@ -171,5 +157,41 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 			}
 		}
 	}
-	return nil
+	return top_level_decls, nil
+}
+
+func walkBodyAndEmitJS(buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileHash string, allTopLevelDecls map[string]js.IExpr) {
+	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
+		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
+			switch child_node.Type {
+			case html.TextNode:
+				parts := htmlSplitTextAndJSExprs(child_node.Data, allTopLevelDecls)
+				for _, part := range parts {
+					switch part := part.(type) {
+					case string:
+						buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
+					case js.INode:
+						buf.WriteString(pref + parentNodeVarName + ".append(" + jsString(part) + ");")
+					default:
+						panic(part)
+					}
+				}
+			case html.ElementNode:
+				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileHash
+				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
+				for _, attr := range child_node.Attr {
+					parts := htmlSplitTextAndJSExprs(attr.Val, allTopLevelDecls)
+					attr.Val = ""
+					for _, part := range parts {
+						switch part := part.(type) {
+						case string:
+							attr.Val += part
+						}
+					}
+				}
+				walkBodyAndEmitJS(buf, level+1, child_node, node_var_name, zuiFileHash, allTopLevelDecls)
+				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+			}
+		}
+	}
 }

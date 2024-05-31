@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 3k4fpzey8kzgk1wds5y69s1z41bmd3w0w4xvpz1tt4lr8kfcx9wil12xo
+// Source file content hash: 16f57lkjhvwlm2pa4lz508mqyh2896nlxezdr5n9z9t2bxtlo3e10q7n45
 
 export class App extends HTMLElement {
   constructor() {
@@ -15,40 +15,16 @@ export class App extends HTMLElement {
   }
   attributeChangedCallback() {
   }
+
+
+  greetName = "zui";
+
+
   zuiCreateHTMLElements(shadowRoot) {
-    const node_h1_0_0_3k4fpzey8kzgk1wds5y69s1z41bmd3w0w4xvpz1tt4lr8kfcx9wil12xo = document.createElement("h1");
-    node_h1_0_0_3k4fpzey8kzgk1wds5y69s1z41bmd3w0w4xvpz1tt4lr8kfcx9wil12xo.append("Hello {greetName}!");
-    shadowRoot.appendChild(node_h1_0_0_3k4fpzey8kzgk1wds5y69s1z41bmd3w0w4xvpz1tt4lr8kfcx9wil12xo);
+    const node_h1_0_0_16f57lkjhvwlm2pa4lz508mqyh2896nlxezdr5n9z9t2bxtlo3e10q7n45 = document.createElement("h1");
+    node_h1_0_0_16f57lkjhvwlm2pa4lz508mqyh2896nlxezdr5n9z9t2bxtlo3e10q7n45.append("Hello {greetName.toUpperCase()}!");
+    shadowRoot.appendChild(node_h1_0_0_16f57lkjhvwlm2pa4lz508mqyh2896nlxezdr5n9z9t2bxtlo3e10q7n45);
   }
-
-
-greetName = "ZUI";
-fooB = () => {
-    let mooha = () => {
-        if (true) {
-            while (false) {
-                console.log(123);
-            }
-        }
-    };
-    console.log(greetName + " is here but " + wot + " aint");
-};
-daFunc = function() {
-    function foobie() {
-        if (true) {
-            while (false) {
-                console.log(123);
-            }
-        }
-    }
-    return greetName.toUpperCase();
-};
-foo() {
-    console.log("FOOBAR " + greetName + blaBla);
-    console.log("WhooHa");
 }
 
-
-}
-
-customElements.define('zui-app_3k4fpzey8kzgk1wds5y69s1z41bmd3w0w4xvpz1tt4lr8kfcx9wil12xo', App);
+customElements.define('zui-app_16f57lkjhvwlm2pa4lz508mqyh2896nlxezdr5n9z9t2bxtlo3e10q7n45', App);

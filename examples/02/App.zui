@@ -1,33 +1,6 @@
-<!--https://learn.svelte.dev/tutorial/your-first-component-->
 <script>
-    let greetName = "ZUI";
-    let fooB = () => {
-        let mooha = () => {
-            if (true) {
-                while (false) {
-                    console.log(123);
-                }
-            }
-        };
-
-        console.log(greetName + " is here but " + wot + " aint");
-    };
-    let daFunc = function () {
-        function foobie() {
-            if (true) {
-                while (false) {
-                    console.log(123);
-                }
-            }
-        }
-
-        return greetName.toUpperCase();
-    };
-
-    function foo() {
-        console.log("FOOBAR " + greetName + blaBla);
-        console.log("WhooHa");
-    }
+    let greetName = "zui";
 </script>
 
-<h1>Hello {greetName}!</h1>
+<!--https://learn.svelte.dev/tutorial/your-first-component-->
+<h1>Hello {greetName.toUpperCase()}!</h1>
