@@ -19,8 +19,7 @@ export class App extends HTMLElement {
     node_p_0_0_2dw3yk.append("This is a paragraph.");
     shadowRoot.appendChild(node_p_0_0_2dw3yk);
     shadowRoot.append("\n");
-    const node_zui_2dw3yk_0_2_2dw3yk = document.createElement("zui_2dw3yk");
-    node_zui_2dw3yk_0_2_2dw3yk.setAttribute("zui-tag-name", ''+"Nested");
+    const node_zui_2dw3yk_0_2_2dw3yk = document.createElement(Nested.ZuiTagName);
     shadowRoot.appendChild(node_zui_2dw3yk_0_2_2dw3yk);
     shadowRoot.append("\n\n");
     const node_style_0_4_2dw3yk = document.createElement("style");
@@ -30,4 +29,5 @@ export class App extends HTMLElement {
 
   static ZuiTagName = "zui-app_2dw72b2k37hk93fqtrlrlgi8spfhy44qznc2i5rwcja3krdxfg11z23yk";
 }
+import { Nested } from './Nested.js'
 customElements.define(App.ZuiTagName, App);

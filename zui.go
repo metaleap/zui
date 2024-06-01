@@ -69,28 +69,6 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		}
 	}
 
-	// initial basic mostly-static JS emits
-	zui_file_name := filepath.Base(zuiFilePath)
-	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
-	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
-	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
-
-	me.WriteString(newline + "  constructor() {")
-	me.WriteString(newline + "    super();")
-	me.WriteString(newline + "  }")
-
-	me.WriteString(newline + "  connectedCallback() {")
-	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
-	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
-	me.WriteString(newline + "  }")
-
-	// me.WriteString(newline + "  disconnectedCallback() {")
-	// me.WriteString(newline + "  }")
-	// me.WriteString(newline + "  adoptedCallback() {")
-	// me.WriteString(newline + "  }")
-	// me.WriteString(newline + "  attributeChangedCallback() {")
-	// me.WriteString(newline + "  }")
-
 	var htm_head, htm_body, htm_script *html.Node
 	// find the <head> and <body> first
 	for _, node := range htm_top_nodes {
@@ -115,6 +93,28 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 			return "", err
 		}
 	}
+
+	// initial basic mostly-static JS emits
+	zui_file_name := filepath.Base(zuiFilePath)
+	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
+	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
+	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
+
+	me.WriteString(newline + "  constructor() {")
+	me.WriteString(newline + "    super();")
+	me.WriteString(newline + "  }")
+
+	me.WriteString(newline + "  connectedCallback() {")
+	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
+	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
+	me.WriteString(newline + "  }")
+
+	// me.WriteString(newline + "  disconnectedCallback() {")
+	// me.WriteString(newline + "  }")
+	// me.WriteString(newline + "  adoptedCallback() {")
+	// me.WriteString(newline + "  }")
+	// me.WriteString(newline + "  attributeChangedCallback() {")
+	// me.WriteString(newline + "  }")
 
 	// deal with the <script>
 	if htm_script != nil && htm_script.FirstChild != nil &&
@@ -141,6 +141,14 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
 	me.WriteString(newline + "}")
+	for _, zui_import_name := range orderedMapKeys(me.allImports) {
+		zui_import_path := me.allImports[zui_import_name]
+		zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
+		if !FsIsFile(filepath.Join(filepath.Dir(me.zuiFilePath), zui_import_path)) {
+			return "", errors.New(me.zuiFilePath + ": imported '" + zui_import_name + "' from non-existing file '" + zui_import_path + "'")
+		}
+		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "'")
+	}
 	me.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
 
 	return me.String() + newline, err
@@ -171,8 +179,9 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 			assert(name != "")
 			me.topLevelDecls[name] = it
 		case *js.ImportStmt:
-			assert(len(it.Default) != 0 && len(it.Module) != 0 && len(it.List) == 0)
-			me.allImports[string(it.Default)] = string(it.Module) // Default: "Nested", Module: "./Nested.zui" List: []
+			name, path := strings.Trim(string(it.Default), "\"'"), strings.Trim(string(it.Module), "\"'")
+			assert(name != "" && path != "" && len(it.List) == 0)
+			me.allImports[name] = path
 
 			// default:
 			// 	println(">>" + fmt.Sprintf("%T", it) + "<<")
@@ -247,12 +256,20 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					}
 				}
 			case html.ElementNode:
-				if child_node.Data == ("zui_" + me.zuiFileIdent) {
+				node_var_name := "node_" + replDashToUnderscore.Replace(child_node.Data) + "_" + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + me.zuiFileIdent
 
-					// continue
+				if child_node.Data == ("zui_" + me.zuiFileIdent) {
+					zui_tag_name := htmlAttr(child_node, "zui-tag-name")
+					assert(zui_tag_name != "")
+					zui_rel_file_path := me.allImports[zui_tag_name]
+					if zui_rel_file_path == "" {
+						return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' not imported")
+					}
+					me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + zui_tag_name + ".ZuiTagName);")
+					me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+					continue
 				}
 
-				node_var_name := "node_" + replDashToUnderscore.Replace(child_node.Data) + "_" + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + me.zuiFileIdent
 				me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
 					parts, err := me.htmlSplitTextAndJSExprs(attr.Val)

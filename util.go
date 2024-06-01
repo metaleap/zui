@@ -1,11 +1,13 @@
 package zui
 
 import (
+	"cmp"
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/binary"
 	"io/fs"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -43,6 +45,17 @@ func shortenedLen6(zuiFileHash string) string {
 	return zuiFileHash[:3] + zuiFileHash[len(zuiFileHash)-3:]
 }
 
+func orderedMapKeys[TKey cmp.Ordered, TValue any](m map[TKey]TValue) (ret []TKey) {
+	ret = make([]TKey, 0, len(m))
+	for k := range m {
+		ret = append(ret, k)
+	}
+	sort.Slice(ret, func(i int, j int) bool {
+		return cmp.Less[TKey](ret[i], ret[j])
+	})
+	return
+}
+
 func FsIsDir(dirPath string) bool   { return fsIs(dirPath, fs.FileInfo.IsDir, true) }
 func FsIsFile(filePath string) bool { return fsIs(filePath, fs.FileInfo.IsDir, false) }
 func fsIs(path string, check func(fs.FileInfo) bool, expect bool) bool {
@@ -56,4 +69,11 @@ func fsStat(path string) fs.FileInfo {
 		panic(err)
 	}
 	return ıf(is_not_exist, nil, fs_info)
+}
+
+func FsPathSwapExt(filePath string, oldExtInclDot string, newExtInclDot string) string {
+	if strings.HasSuffix(filePath, oldExtInclDot) {
+		filePath = filePath[:len(filePath)-len(oldExtInclDot)] + newExtInclDot
+	}
+	return filePath
 }

@@ -4,7 +4,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/metaleap/zui"
 )
@@ -48,13 +47,6 @@ func fsWriteTextFile(filePath string, data string) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func fsPathSwapExt(filePath string, oldExtInclDot string, newExtInclDot string) string {
-	if strings.HasSuffix(filePath, oldExtInclDot) {
-		filePath = filePath[:len(filePath)-len(oldExtInclDot)] + newExtInclDot
-	}
-	return filePath
 }
 
 func fsGlob(dirPath string, pattern string) []string {

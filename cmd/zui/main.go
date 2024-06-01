@@ -16,7 +16,7 @@ func main() {
 			println(fsPath)
 			zui_file_src, zui_file_hash := fsReadTextFile(fsPath, true)
 
-			js_file_path := fsPathSwapExt(fsPath, ".zui", ".js")
+			js_file_path := zui.FsPathSwapExt(fsPath, ".zui", ".js")
 			if (!force) && zui.FsIsFile(js_file_path) {
 				js_file_src, _ := fsReadTextFile(js_file_path, false)
 				if strings.HasPrefix(js_file_src, zui.FirstLineJS(fsPath, zui_file_hash)) {

@@ -42,6 +42,38 @@ func htmlSrc(node *html.Node) string {
 	return "<?>"
 }
 
+func htmlAttr(node *html.Node, attrName string) string {
+	for _, attr := range node.Attr {
+		if attr.Key == attrName {
+			return attr.Val
+		}
+	}
+	return ""
+}
+
+func htmlReplaceNode(parentNode *html.Node, oldChildNode *html.Node, newChildNodes ...*html.Node) {
+	for i, new_child_node := range newChildNodes {
+		if i < len(newChildNodes)-1 {
+			new_child_node.NextSibling = newChildNodes[i+1]
+		}
+		if i > 0 {
+			new_child_node.PrevSibling = newChildNodes[i-1]
+		}
+	}
+	for old_child_node := parentNode.FirstChild; old_child_node != nil; old_child_node = old_child_node.NextSibling {
+		if old_child_node == oldChildNode {
+			if idx := 0; old_child_node.PrevSibling != nil {
+				old_child_node.PrevSibling.NextSibling = newChildNodes[idx]
+				newChildNodes[idx].PrevSibling = old_child_node.PrevSibling
+			}
+			if idx := len(newChildNodes) - 1; old_child_node.NextSibling != nil {
+				old_child_node.NextSibling.PrevSibling = newChildNodes[idx]
+				newChildNodes[idx].NextSibling = old_child_node.NextSibling
+			}
+		}
+	}
+}
+
 func (me *zui2js) htmlFixupSelfClosingZuiTagsPriorToParsing() (string, error) {
 	src_htm, zuiTagName := me.zuiFileSrcOrig, "zui_"+me.zuiFileIdent
 	for {
