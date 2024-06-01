@@ -12,6 +12,11 @@ import (
 	"github.com/tdewolff/parse/v2/js"
 )
 
+var (
+	replDashToUnderscore = strings.NewReplacer("-", "_")
+	replRemoveBrCloseTag = strings.NewReplacer("</br>", "")
+)
+
 func htmlSrc(node *html.Node) string {
 	switch node.Type {
 	case html.TextNode:
@@ -64,11 +69,9 @@ func htmlFixupSelfClosingZuiTagsPriorToParsing(zuiFilePath string, zuiFileHash s
 			srcHtml[idx_open+1+len(name):idx_close] + "></" + new_name + ">" + srcHtml[idx_close+len("/>"):]
 	}
 
-	srcHtml = replHtmlFixupSelfClosingBrTagsPriorToParsing.Replace(srcHtml) // html parser oddity: it would turn <br></br> into <br/><br/> (though it won't for img, hr, etc.)
+	srcHtml = replRemoveBrCloseTag.Replace(srcHtml) // html parser oddity: it would turn <br></br> into <br/><br/> (though it won't for img, hr, etc.)
 	return srcHtml, nil
 }
-
-var replHtmlFixupSelfClosingBrTagsPriorToParsing = strings.NewReplacer("</br>", "")
 
 func htmlTopLevelScriptElement(zuiFilePath string, hayStack *html.Node, curScript *html.Node) (*html.Node, error) {
 	for node := hayStack.FirstChild; node != nil; node = node.NextSibling {

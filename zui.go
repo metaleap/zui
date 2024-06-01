@@ -151,6 +151,7 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 			assert(name != "")
 			top_level_decls[name] = it
 		case *js.ImportStmt:
+			assert(len(it.Default) != 0 && len(it.Module) != 0 && len(it.List) == 0)
 			// Default: "Nested", Module: "./Nested.zui" List: []
 
 			// default:
@@ -226,7 +227,7 @@ func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, pare
 					}
 				}
 			case html.ElementNode:
-				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, child_node.Data+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileIdent
+				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, replDashToUnderscore.Replace(child_node.Data)+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileIdent
 				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
 					parts, err := htmlSplitTextAndJSExprs(zuiFilePath, attr.Val, allTopLevelDecls)

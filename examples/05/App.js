@@ -25,10 +25,10 @@ export class App extends HTMLElement {
     const node_hr_0_4_33sn90 = document.createElement("hr");
     shadowRoot.appendChild(node_hr_0_4_33sn90);
     shadowRoot.append("\n");
-    const node_zui-tag_33sn90_0_6_33sn90 = document.createElement("zui-tag_33sn90");
-    node_zui-tag_33sn90_0_6_33sn90.setAttribute("zui-tag-name", ''+"Nested");
-    node_zui-tag_33sn90_0_6_33sn90.setAttribute("foo", ''+"bar");
-    shadowRoot.appendChild(node_zui-tag_33sn90_0_6_33sn90);
+    const node_zui_tag_33sn90_0_6_33sn90 = document.createElement("zui-tag_33sn90");
+    node_zui_tag_33sn90_0_6_33sn90.setAttribute("zui-tag-name", ''+"Nested");
+    node_zui_tag_33sn90_0_6_33sn90.setAttribute("foo", ''+"bar");
+    shadowRoot.appendChild(node_zui_tag_33sn90_0_6_33sn90);
     shadowRoot.append("\n");
     const node_img_0_8_33sn90 = document.createElement("img");
     shadowRoot.appendChild(node_img_0_8_33sn90);
