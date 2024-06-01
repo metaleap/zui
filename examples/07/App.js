@@ -21,7 +21,7 @@ increment() {
     let tmp_fn;
     const node_button_0_0_31hi9p = document.createElement("button");
     tmp_fn = (function() { return this.increment; }).bind(this);
-    node_button_0_0_31hi9p.addEventListener('click',  (tmp_fn()) );
+    node_button_0_0_31hi9p.addEventListener('click', ((fn) => ((evt) => fn().bind(this)(evt)).bind(this)).bind(this)(tmp_fn));
     node_button_0_0_31hi9p.append("\n    Clicked ");
     tmp_fn = (function() { return this.count; }).bind(this);
     const txt_3pp1mo = document.createTextNode(tmp_fn());

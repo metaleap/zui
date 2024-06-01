@@ -308,7 +308,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
 						}
 						evt_name := strings.TrimSpace(attr.Key[len("on:"):])
-						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', " + attr_val_js_expr + ");")
+						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((fn) => ((evt) => fn().bind(this)(evt)).bind(this)).bind(this)(tmp_fn));")
 					}
 				}
 				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
