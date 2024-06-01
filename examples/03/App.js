@@ -17,8 +17,9 @@ src = '03/image.png';
   zuiCreateHTMLElements(shadowRoot) {
     let tmp_fn;
     const node_img_0_0_2248e2 = document.createElement("img");
-    node_img_0_0_2248e2.setAttribute("alt", ''+"Rick");
-    node_img_0_0_2248e2.setAttribute("src", ''+this.src+);
+    node_img_0_0_2248e2.setAttribute("alt", '' + "Rick");
+    const tmp_fn_0 = (function() { return '' + this.src; }).bind(this);
+    node_img_0_0_2248e2.setAttribute("src", '' +  (tmp_fn_0()) );
     shadowRoot.appendChild(node_img_0_0_2248e2);
   }
 

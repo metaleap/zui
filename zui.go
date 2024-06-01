@@ -279,20 +279,23 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						return err
 					}
 
-					me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", ''")
+					attr_val_js_expr, attr_val_js_funcs := "''", ""
 					for _, part := range parts {
-						me.WriteByte('+')
-						if part.text != "" {
-							me.WriteString(strconv.Quote(part.text))
-						} else if part.expr != nil {
+						if part.expr != nil {
+							attr_val_js_expr += " + "
 							if part.exprAsHtml {
 								return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
 							}
 							js_src := strings.TrimSuffix(jsString(part.expr), ";")
-							me.WriteString(js_src)
+							attr_val_js_funcs += (pref + "const tmp_fn_" + strconv.Itoa(i) + " = (function() { return '' + " + js_src + "; }).bind(this);")
+							attr_val_js_expr += " (tmp_fn_" + strconv.Itoa(i) + "()) "
+						} else if part.text != "" {
+							attr_val_js_expr += " + "
+							attr_val_js_expr += strconv.Quote(part.text)
 						}
 					}
-					me.WriteString(");")
+					me.WriteString(attr_val_js_funcs)
+					me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", " + attr_val_js_expr + ");")
 				}
 				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
 					return err
