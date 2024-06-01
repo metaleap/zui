@@ -11,7 +11,33 @@ export class App extends HTMLElement {
   }
 
 
-src = '03/image.png';
+  #src = '03/image.png';
+  get src() { return this.#src; }
+  set src(v) {
+    if (this.#src !== v) {
+      this.#src = v;
+      this.zuiOnPropChanged('src');
+    }
+  }
+#subs = null;
+zuiSub(name, fn) {
+  let arr = this.subs.get(name);
+  if (!arr)
+    arr=[fn];
+  else
+    arr.push(fn);
+  this.subs.set(name, arr);
+}
+zuiOnPropChanged(name) {
+  if (this.subs) {
+    const subs = this.subs.get(name);
+    if (subs && subs.length) {
+      for (const fn of subs)
+        fn.bind(this)();
+    }
+  }
+}
+
 
 
   zuiCreateHTMLElements(shadowRoot) {

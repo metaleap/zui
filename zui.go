@@ -31,7 +31,6 @@ type zui2js struct {
 
 	topLevelDecls map[string]js.IExpr
 	allImports    map[string]string
-	usedSubsMap   bool
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
@@ -127,16 +126,12 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	}
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	me.WriteString(newline + "    let tmp_fn;")
-	me.usedSubsMap = false
 	if htm_body != nil {
 		if err = me.walkBodyAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
 	me.WriteString(newline + "  }")
-	if me.usedSubsMap {
-		me.WriteString(newline + newline + "  subs_" + me.zuiFileIdent + " = new Map();")
-	}
 
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
@@ -188,6 +183,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		}
 	}
 
+	pref, got_setters := "\n  ", false
 	// now, emit the top-level decls, rewriting all func ASTs
 	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
 		switch it := stmt.(type) {
@@ -198,11 +194,11 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 			}
 			src_fn := jsString(it)
 			assert(strings.HasPrefix(src_fn, "function "))
-			me.WriteString("\n" + src_fn[len("function "):])
+			me.WriteString("\n\n" + src_fn[len("function "):] + "\n")
 		case *js.VarDecl:
 			for _, item := range it.List {
 				name := jsString(item.Binding)
-				me.WriteString("\n" + name)
+				me.WriteString(pref + "#" + name)
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
@@ -219,8 +215,38 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 					me.WriteString(" = " + jsString(item.Default))
 				}
 				me.WriteByte(';')
+				me.WriteString(pref + "get " + name + "() { return this.#" + name + "; }")
+				me.WriteString(pref + "set " + name + "(v) {")
+				me.WriteString(pref + "  if (this.#" + name + " !== v) {")
+				me.WriteString(pref + "    this.#" + name + " = v;")
+				me.WriteString(pref + "    this.zuiOnPropChanged('" + name + "');")
+				me.WriteString(pref + "  }")
+				me.WriteString(pref + "}")
+				got_setters = true
 			}
 		}
+	}
+	if got_setters {
+		me.WriteString(`
+#subs = null;
+zuiSub(name, fn) {
+  let arr = this.subs.get(name);
+  if (!arr)
+    arr = [fn];
+  else
+    arr.push(fn);
+  this.subs.set(name, arr);
+}
+zuiOnPropChanged(name) {
+  if (this.subs) {
+    const subs = this.subs.get(name);
+    if (subs && subs.length) {
+      for (const fn of subs)
+        fn.bind(this)();
+    }
+  }
+}
+`)
 	}
 	return nil
 }
@@ -252,8 +278,6 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						} else {
 							me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
 						}
-						me.WriteString(pref + "this.subs_" + me.zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
-						me.usedSubsMap = true
 						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 					}
 				}
