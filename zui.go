@@ -17,11 +17,34 @@ func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 	return "// Code generated from " + filepath.Base(zuiFilePath) + ". DO NOT EDIT\n// Source file content hash: " + zuiFileHash + "\n"
 }
 
-func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
-	var buf_js strings.Builder // our result JS src we're building
-	ident := shortenedLen6(zuiFileHash)
+type zui2js struct {
+	strings.Builder // our result JS src that we're building
 
-	src_htm, err := htmlFixupSelfClosingZuiTagsPriorToParsing(zuiFilePath, ident, zuiFileSrc)
+	// init stuff
+
+	zuiFilePath    string
+	zuiFileHash    string
+	zuiFileIdent   string
+	zuiFileSrcOrig string
+
+	// in-flight state
+
+	topLevelDecls map[string]js.IExpr
+	allImports    map[string]string
+	usedSubsMap   bool
+}
+
+func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
+	me := zui2js{
+		zuiFilePath:    zuiFilePath,
+		zuiFileHash:    zuiFileHash,
+		zuiFileIdent:   shortenedLen6(zuiFileHash),
+		zuiFileSrcOrig: zuiFileSrc,
+		topLevelDecls:  map[string]js.IExpr{},
+		allImports:     map[string]string{},
+	}
+
+	src_htm, err := me.htmlFixupSelfClosingZuiTagsPriorToParsing()
 	if err != nil {
 		return "", err
 	}
@@ -49,24 +72,24 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	// initial basic mostly-static JS emits
 	zui_file_name := filepath.Base(zuiFilePath)
 	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
-	buf_js.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
-	buf_js.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
+	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
+	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
 
-	buf_js.WriteString(newline + "  constructor() {")
-	buf_js.WriteString(newline + "    super();")
-	buf_js.WriteString(newline + "  }")
+	me.WriteString(newline + "  constructor() {")
+	me.WriteString(newline + "    super();")
+	me.WriteString(newline + "  }")
 
-	buf_js.WriteString(newline + "  connectedCallback() {")
-	buf_js.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
-	buf_js.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
-	buf_js.WriteString(newline + "  }")
+	me.WriteString(newline + "  connectedCallback() {")
+	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
+	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
+	me.WriteString(newline + "  }")
 
-	// buf_js.WriteString(newline + "  disconnectedCallback() {")
-	// buf_js.WriteString(newline + "  }")
-	// buf_js.WriteString(newline + "  adoptedCallback() {")
-	// buf_js.WriteString(newline + "  }")
-	// buf_js.WriteString(newline + "  attributeChangedCallback() {")
-	// buf_js.WriteString(newline + "  }")
+	// me.WriteString(newline + "  disconnectedCallback() {")
+	// me.WriteString(newline + "  }")
+	// me.WriteString(newline + "  adoptedCallback() {")
+	// me.WriteString(newline + "  }")
+	// me.WriteString(newline + "  attributeChangedCallback() {")
+	// me.WriteString(newline + "  }")
 
 	var htm_head, htm_body, htm_script *html.Node
 	// find the <head> and <body> first
@@ -80,62 +103,60 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	}
 	// now look for the <script> in the <head>
 	if htm_head != nil {
-		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_head, htm_script)
+		htm_script, err = me.htmlTopLevelScriptElement(htm_head, htm_script)
 		if err != nil {
 			return "", err
 		}
 	}
 	// also look for the top-level <script> in the <body> (found there instead of <head> if it's placed after other markup but still top-level)
 	if htm_body != nil {
-		htm_script, err = htmlTopLevelScriptElement(zuiFilePath, htm_body, htm_script)
+		htm_script, err = me.htmlTopLevelScriptElement(htm_body, htm_script)
 		if err != nil {
 			return "", err
 		}
 	}
 
 	// deal with the <script>
-	top_level_decls := map[string]js.IExpr{}
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
-		buf_js.WriteString(newline + newline) // extra new lines because these emits are unindented
-		if top_level_decls, err = walkScriptAndEmitJS(zuiFilePath, &buf_js, htm_script.FirstChild.Data); err != nil {
+		me.WriteString(newline + newline) // extra new lines because these emits are unindented
+		if err = me.walkScriptAndEmitJS(htm_script.FirstChild.Data); err != nil {
 			return "", err
 		}
-		buf_js.WriteString(newline + newline)
+		me.WriteString(newline + newline)
 	}
 
-	buf_js.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
-	buf_js.WriteString(newline + "    let tmp_fn;")
+	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
+	me.WriteString(newline + "    let tmp_fn;")
 	used_subs_map := false
 	if htm_body != nil {
-		if err = walkBodyAndEmitJS(zuiFilePath, &buf_js, 0, htm_body, "shadowRoot", ident, top_level_decls, &used_subs_map); err != nil {
+		if err = me.walkBodyAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
-	buf_js.WriteString(newline + "  }")
+	me.WriteString(newline + "  }")
 	if used_subs_map {
-		buf_js.WriteString(newline + newline + "  subs_" + ident + " = new Map();")
+		me.WriteString(newline + newline + "  subs_" + me.zuiFileIdent + " = new Map();")
 	}
 
 	// register the HTML Custom Element
-	buf_js.WriteString(newline + newline + "  static ZuiTagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
-	buf_js.WriteString(newline + "}")
-	buf_js.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
+	me.WriteString(newline + newline + "  static ZuiTagName = " + strconv.Quote("zui-"+strings.ToLower(zui_class_name)+"_"+zuiFileHash) + ";")
+	me.WriteString(newline + "}")
+	me.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
 
-	return buf_js.String() + newline, err
+	return me.String() + newline, err
 }
 
-func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeText string) (map[string]js.IExpr, error) {
+func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 	js_ast, err := js.Parse(parse.NewInputString(scriptNodeText), js.Options{})
 	if err != nil {
-		return nil, errors.New(zuiFilePath + ": " + err.Error())
+		return errors.New(me.zuiFilePath + ": " + err.Error())
 	}
-	if err = jsWalkAndRewriteWholeAST(js_ast, zuiFilePath); err != nil {
-		return nil, err
+	if err = jsWalkAndRewriteWholeAST(me, js_ast); err != nil {
+		return err
 	}
 
 	// capture all top-level decl names first before any emits, because func AST rewrites need them
-	top_level_decls := map[string]js.IExpr{}
 	for _, stmt := range js_ast.List {
 		switch it := stmt.(type) {
 		case *js.VarDecl:
@@ -143,16 +164,16 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 				assert(item.Binding != nil)
 				name := jsString(item.Binding)
 				assert(name != "")
-				top_level_decls[name] = item.Default
+				me.topLevelDecls[name] = item.Default
 			}
 		case *js.FuncDecl:
 			assert(it.Name != nil)
 			name := it.Name.String()
 			assert(name != "")
-			top_level_decls[name] = it
+			me.topLevelDecls[name] = it
 		case *js.ImportStmt:
 			assert(len(it.Default) != 0 && len(it.Module) != 0 && len(it.List) == 0)
-			// Default: "Nested", Module: "./Nested.zui" List: []
+			me.allImports[string(it.Default)] = string(it.Module) // Default: "Nested", Module: "./Nested.zui" List: []
 
 			// default:
 			// 	println(">>" + fmt.Sprintf("%T", it) + "<<")
@@ -164,94 +185,99 @@ func walkScriptAndEmitJS(zuiFilePath string, buf *strings.Builder, scriptNodeTex
 		switch it := stmt.(type) {
 		case *js.FuncDecl:
 			name := it.Name.String()
-			if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-				return nil, err
+			if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+				return err
 			}
 			src_fn := jsString(it)
 			assert(strings.HasPrefix(src_fn, "function "))
-			buf.WriteString("\n" + src_fn[len("function "):])
+			me.WriteString("\n" + src_fn[len("function "):])
 		case *js.VarDecl:
 			for _, item := range it.List {
 				name := jsString(item.Binding)
-				buf.WriteString("\n" + name)
+				me.WriteString("\n" + name)
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
-						if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-							return nil, err
+						if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+							return err
 						}
 						item.Default = it
 					case *js.ArrowFunc:
-						if err = jsWalkAndRewriteTopLevelFuncAST(zuiFilePath, name, &it.Body, top_level_decls); err != nil {
-							return nil, err
+						if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+							return err
 						}
 						item.Default = it
 					}
-					buf.WriteString(" = " + jsString(item.Default))
+					me.WriteString(" = " + jsString(item.Default))
 				}
-				buf.WriteByte(';')
+				me.WriteByte(';')
 			}
 		}
 	}
-	return top_level_decls, nil
+	return nil
 }
 
-func walkBodyAndEmitJS(zuiFilePath string, buf *strings.Builder, level int, parentNode *html.Node, parentNodeVarName string, zuiFileIdent string, allTopLevelDecls map[string]js.IExpr, usedSubsMap *bool) error {
+func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNodeVarName string) error {
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
 		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
 			switch child_node.Type {
 			case html.TextNode:
 				if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
-					buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(child_node.Data) + ");")
+					me.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(child_node.Data) + ");")
 					continue
 				}
 
-				parts, err := htmlSplitTextAndJSExprs(zuiFilePath, child_node.Data, allTopLevelDecls)
+				parts, err := me.htmlSplitTextAndJSExprs(child_node.Data)
 				if err != nil {
 					return err
 				}
 				for _, part := range parts {
 					switch part := part.(type) {
 					case string:
-						buf.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
+						me.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
 					case js.INode:
 						js_src := strings.TrimSuffix(jsString(part), ";")
 						span_var_name := "txt_" + shortenedLen6(ContentHashStr([]byte(js_src)))
-						buf.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
-						buf.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
-						buf.WriteString(pref + "this.subs_" + zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
-						*usedSubsMap = true
-						buf.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
+						me.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
+						me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
+						me.WriteString(pref + "this.subs_" + me.zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
+						me.usedSubsMap = true
+						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 					default:
 						panic(part)
 					}
 				}
 			case html.ElementNode:
-				node_var_name := "node_" + ıf(child_node.Type == html.ElementNode, replDashToUnderscore.Replace(child_node.Data)+"_", "") + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + zuiFileIdent
-				buf.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
+				if child_node.Data == ("zui_" + me.zuiFileIdent) {
+
+					continue
+				}
+
+				node_var_name := "node_" + replDashToUnderscore.Replace(child_node.Data) + "_" + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + me.zuiFileIdent
+				me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
-					parts, err := htmlSplitTextAndJSExprs(zuiFilePath, attr.Val, allTopLevelDecls)
+					parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
 					if err != nil {
 						return err
 					}
 
-					buf.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", ''")
+					me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", ''")
 					for _, part := range parts {
-						buf.WriteByte('+')
+						me.WriteByte('+')
 						switch part := part.(type) {
 						case string:
-							buf.WriteString(strconv.Quote(part))
+							me.WriteString(strconv.Quote(part))
 						case js.INode:
 							js_src := strings.TrimSuffix(jsString(part), ";")
-							buf.WriteString(js_src)
+							me.WriteString(js_src)
 						}
 					}
-					buf.WriteString(");")
+					me.WriteString(");")
 				}
-				if err := walkBodyAndEmitJS(zuiFilePath, buf, level+1, child_node, node_var_name, zuiFileIdent, allTopLevelDecls, usedSubsMap); err != nil {
+				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
 					return err
 				}
-				buf.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+				me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
 			}
 		}
 	}

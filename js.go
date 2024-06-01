@@ -14,11 +14,11 @@ func jsString(node js.INode) string {
 	return buf.String()
 }
 
-func jsWalkAndRewriteTopLevelFuncAST(zuiFilePath string, funcName string, funcBody *js.BlockStmt, allTopLevelDecls map[string]js.IExpr) error {
+func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) error {
 	me := jsFuncASTRewriteWalker{
-		allTopLevelDecls: allTopLevelDecls,
+		allTopLevelDecls: state.topLevelDecls,
 		funcName:         funcName,
-		zuiFilePath:      zuiFilePath,
+		zuiFilePath:      state.zuiFilePath,
 		gatherMode:       true,
 		rewrites:         map[js.IExpr]js.IExpr{},
 	}
@@ -81,10 +81,10 @@ func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {
 	})
 }
 
-func jsWalkAndRewriteWholeAST(ast *js.AST, zuiFilePath string) error {
+func jsWalkAndRewriteWholeAST(state *zui2js, ast *js.AST) error {
 	// for misc. other walk-and-rewrite needs not covered by `jsWalkAndRewriteTopLevelFuncAST`
 	me := jsWholeASTRewriter{
-		zuiFilePath: zuiFilePath,
+		zuiFilePath: state.zuiFilePath,
 		gatherMode:  true,
 		rewrites:    map[js.INode]js.INode{},
 	}

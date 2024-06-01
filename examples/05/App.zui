@@ -1,13 +1,10 @@
 <!--https://learn.svelte.dev/tutorial/nested-components-->
 <script>
-    import Nested from "./Nested.svelte";
+    import Nested from "./Nested.zui";
 </script>
 
-<br />
 <p>This is a paragraph.</p>
-<hr />
-<Nested foo="bar" />
-<img />
+<Nested />
 
 <style>
     p {
