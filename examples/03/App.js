@@ -16,7 +16,22 @@ export class App extends HTMLElement {
       this.zuiOnPropChanged('src');
     }
   }
-#subs = null;
+
+
+  zuiCreateHTMLElements(shadowRoot) {
+    const el1 = document.createElement("img");
+    const fn1 = () => "Rick";
+    el1.setAttribute("alt",  fn1());
+    const fn2 = (function() { return this.src; }).bind(this);
+    const fn3 = () =>  (fn2()) ;
+    el1.setAttribute("src",  fn3());
+    this.zuiSub('src', () => el1.setAttribute("src",  fn3()));
+    shadowRoot.appendChild(el1);
+  }
+  constructor() {
+    super();
+  }
+#subs = new Map();
 zuiSub(name, fn) {
   let arr = this.#subs.get(name);
   if (!(arr && arr.push))
@@ -30,25 +45,11 @@ zuiOnPropChanged(name) {
     const subs = this.#subs.get(name);
     if (subs && subs.length) {
       for (const fn of subs)
-        fn.bind(this)();
+        fn();
     }
   }
 }
 
-
-
-  zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("img");
-    el1.setAttribute("alt",  "Rick");
-    const fn1 = (function() { return this.src; }).bind(this);
-    el1.setAttribute("src",   (fn1()) );
-    //this.zuiSub('src', ((fn, el) => (() => { el.nodeValue = fn(); }).bind(this)).bind(this)(fn1, span_var_name));
-    shadowRoot.appendChild(el1);
-  }
-  constructor() {
-    super();
-    this.#subs = new Map();
-  }
 
   static ZuiTagName = "zui-app_224abhbqzum0a1ljqpikvf8s3y2uqqiwf578t4s2b1paxznc07jc1eg08e2";
 }

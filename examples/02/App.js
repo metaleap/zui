@@ -16,25 +16,6 @@ export class App extends HTMLElement {
       this.zuiOnPropChanged('greetName');
     }
   }
-#subs = null;
-zuiSub(name, fn) {
-  let arr = this.#subs.get(name);
-  if (!(arr && arr.push))
-    arr = [fn];
-  else
-    arr.push(fn);
-  this.#subs.set(name, arr);
-}
-zuiOnPropChanged(name) {
-  if (this.#subs) {
-    const subs = this.#subs.get(name);
-    if (subs && subs.length) {
-      for (const fn of subs)
-        fn.bind(this)();
-    }
-  }
-}
-
 
 
   zuiCreateHTMLElements(shadowRoot) {
@@ -49,8 +30,26 @@ zuiOnPropChanged(name) {
   }
   constructor() {
     super();
-    this.#subs = new Map();
   }
+#subs = new Map();
+zuiSub(name, fn) {
+  let arr = this.#subs.get(name);
+  if (!(arr && arr.push))
+    arr = [fn];
+  else
+    arr.push(fn);
+  this.#subs.set(name, arr);
+}
+zuiOnPropChanged(name) {
+  if (this.#subs) {
+    const subs = this.#subs.get(name);
+    if (subs && subs.length) {
+      for (const fn of subs)
+        fn();
+    }
+  }
+}
+
 
   static ZuiTagName = "zui-app_3710ixnn6ff0y1iw8u3kk26m701ynt2rrx2xogl5uy0s1aaypom1tbcehz";
 }

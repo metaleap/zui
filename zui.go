@@ -131,10 +131,31 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "  }")
 	me.WriteString(newline + "  constructor() {")
 	me.WriteString(newline + "    super();")
-	if me.usedSubs {
-		me.WriteString(newline + "    this.#subs = new Map();")
-	}
 	me.WriteString(newline + "  }")
+	if !me.usedSubs {
+		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
+	} else {
+		me.WriteString(`
+#subs = new Map();
+zuiSub(name, fn) {
+  let arr = this.#subs.get(name);
+  if (!(arr && arr.push))
+    arr = [fn];
+  else
+    arr.push(fn);
+  this.#subs.set(name, arr);
+}
+zuiOnPropChanged(name) {
+  if (this.#subs) {
+    const subs = this.#subs.get(name);
+    if (subs && subs.length) {
+      for (const fn of subs)
+        fn();
+    }
+  }
+}
+`)
+	}
 
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strQ("zui-"+strLo(zui_class_name)+"_"+zuiFileHash) + ";")
@@ -186,7 +207,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		}
 	}
 
-	pref, got_setters := "\n  ", false
+	pref := "\n  "
 	// now, emit the top-level decls, rewriting all func ASTs
 	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
 		switch it := stmt.(type) {
@@ -225,31 +246,8 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				me.WriteString(pref + "    this.zuiOnPropChanged('" + name + "');")
 				me.WriteString(pref + "  }")
 				me.WriteString(pref + "}")
-				got_setters = true
 			}
 		}
-	}
-	if got_setters {
-		me.WriteString(`
-#subs = null;
-zuiSub(name, fn) {
-  let arr = this.#subs.get(name);
-  if (!(arr && arr.push))
-    arr = [fn];
-  else
-    arr.push(fn);
-  this.#subs.set(name, arr);
-}
-zuiOnPropChanged(name) {
-  if (this.#subs) {
-    const subs = this.#subs.get(name);
-    if (subs && subs.length) {
-      for (const fn of subs)
-        fn.bind(this)();
-    }
-  }
-}
-`)
 	}
 	return nil
 }
@@ -336,11 +334,17 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					me.WriteString(attr_val_js_funcs)
 					switch {
 					default:
-						me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + attr_val_js_expr + ");")
+						fn_name_attr := next_fn()
+						me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
+						me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
+						attr_decl_sub_done := map[string]bool{}
 						for _, part := range parts {
 							for _, top_level_decl_name := range part.exprTopLevelRefs {
-								me.WriteString(pref + "//this.zuiSub('" + top_level_decl_name + "', ((fn, el) => (() => { el." + ıf(part.exprAsHtml, "innerHTML", "nodeValue") + " = fn(); }).bind(this)).bind(this)(" + fn_name + ", " + "span_var_name" + "));")
-								me.usedSubs = true
+								if attr_decl_sub_done[top_level_decl_name] {
+									continue
+								}
+								me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
+								me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
 							}
 						}
 					case strings.HasPrefix(attr.Key, "on:"):
@@ -348,7 +352,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
 						}
 						evt_name := strings.TrimSpace(attr.Key[len("on:"):])
-						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "()).bind(this));")
+						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "().bind(this)()).bind(this));")
 					}
 				}
 				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {

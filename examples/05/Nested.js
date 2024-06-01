@@ -14,6 +14,7 @@ export class Nested extends HTMLElement {
   constructor() {
     super();
   }
+  zuiOnPropChanged(name) {}
 
   static ZuiTagName = "zui-nested_p4uv49rgo5fi3cxcikmk7wguu1pje9tw3br7it23unvx8j5wjvc2lzhoo";
 }

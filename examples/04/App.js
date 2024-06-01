@@ -18,6 +18,7 @@ export class App extends HTMLElement {
   constructor() {
     super();
   }
+  zuiOnPropChanged(name) {}
 
   static ZuiTagName = "zui-app_bz0x9g56pye3od150qsa8yum2ui1zu4834cyu2h42kb153smve1etljw4";
 }

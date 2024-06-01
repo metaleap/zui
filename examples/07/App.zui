@@ -7,10 +7,7 @@
     }
 </script>
 
-<button
-    on:click={increment}
-    title="Geklickt {count}-{count === 1 ? 'mal' : 'mals'}"
->
+<button on:click={increment}>
     Clicked {count}
     {count === 1 ? "time" : "times"}
 </button>
