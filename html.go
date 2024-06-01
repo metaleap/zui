@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"golang.org/x/net/html"
 
@@ -22,15 +23,52 @@ func htmlSrc(node *html.Node) string {
 		for _, attr := range node.Attr {
 			ret += " " + attr.Key + "=" + strconv.Quote(attr.Val)
 		}
-		ret += ">"
-		for child_node := node.FirstChild; child_node != nil; child_node = child_node.NextSibling {
-			ret += htmlSrc(child_node)
+		if node.FirstChild == nil {
+			ret += " />"
+		} else {
+			ret += ">"
+			for child_node := node.FirstChild; child_node != nil; child_node = child_node.NextSibling {
+				ret += htmlSrc(child_node)
+			}
+			ret += "</" + node.Data + ">"
 		}
-		ret += "</" + node.Data + ">"
 		return ret
 	}
 	return "<?>"
 }
+
+func htmlFixupSelfClosingZuiTagsPriorToParsing(zuiFilePath string, zuiFileHash string, srcHtml string) (string, error) {
+	for {
+		idx_close := strings.Index(srcHtml, "/>")
+		if idx_close < 0 {
+			break
+		}
+		idx_open := strings.LastIndexByte(srcHtml[:idx_close], '<')
+		if idx_open < 0 {
+			break
+		}
+		name := srcHtml[idx_open+1 : idx_close]
+		if name == "" || !((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')) {
+			return "", errors.New(zuiFilePath + ": invalid tag name '" + name + "'")
+		}
+		idx_space := strings.IndexFunc(name, unicode.IsSpace)
+		if idx_space > 0 {
+			name = name[:idx_space]
+		}
+		new_name := name
+		if name[0] >= 'A' && name[0] <= 'Z' {
+			new_name = "zui-tag_" + zuiFileHash
+		}
+		srcHtml = srcHtml[:idx_open] + "<" + new_name +
+			ıf(name == new_name, "", " zui-tag-name='"+name+"'") +
+			srcHtml[idx_open+1+len(name):idx_close] + "></" + new_name + ">" + srcHtml[idx_close+len("/>"):]
+	}
+
+	srcHtml = replHtmlFixupSelfClosingBrTagsPriorToParsing.Replace(srcHtml) // html parser oddity: it would turn <br></br> into <br/><br/> (though it won't for img, hr, etc.)
+	return srcHtml, nil
+}
+
+var replHtmlFixupSelfClosingBrTagsPriorToParsing = strings.NewReplacer("</br>", "")
 
 func htmlTopLevelScriptElement(zuiFilePath string, hayStack *html.Node, curScript *html.Node) (*html.Node, error) {
 	for node := hayStack.FirstChild; node != nil; node = node.NextSibling {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
@@ -20,9 +21,29 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	var buf_js strings.Builder // our result JS src we're building
 	ident := shortenedLen6(zuiFileHash)
 
-	htm_root, err := html.Parse(strings.NewReader(strings.TrimSpace(zuiFileSrc)))
+	src_htm, err := htmlFixupSelfClosingZuiTagsPriorToParsing(zuiFilePath, ident, zuiFileSrc)
 	if err != nil {
 		return "", err
+	}
+	htm_top_nodes, err := html.ParseFragment(
+		strings.NewReader(strings.TrimSpace(src_htm)),
+		&html.Node{
+			Type:     html.ElementNode,
+			Data:     "html",
+			DataAtom: atom.Html,
+			Parent: &html.Node{
+				Type: html.DoctypeNode,
+				Data: "html",
+			},
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+	if true {
+		for i, htm := range htm_top_nodes {
+			println(i, htmlSrc(htm))
+		}
 	}
 
 	// initial basic mostly-static JS emits
@@ -48,11 +69,8 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	// buf_js.WriteString(newline + "  }")
 
 	var htm_head, htm_body, htm_script *html.Node
-	for htm_root.FirstChild.Type == html.CommentNode {
-		htm_root.FirstChild = htm_root.FirstChild.NextSibling
-	}
 	// find the <head> and <body> first
-	for node := htm_root.FirstChild.FirstChild; node != nil; node = node.NextSibling {
+	for _, node := range htm_top_nodes {
 		if node.Type == html.ElementNode && node.Data == "head" {
 			htm_head = node
 		}
