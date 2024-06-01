@@ -26,6 +26,8 @@ greetName = "zui";
     shadowRoot.appendChild(node_h1_0_0_371ehz);
   }
 
+  subs_371ehz = new Map();
+
   static ZuiTagName = "zui-app_3710ixnn6ff0y1iw8u3kk26m701ynt2rrx2xogl5uy0s1aaypom1tbcehz";
 }
 customElements.define(App.ZuiTagName, App);

@@ -125,17 +125,16 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		}
 		me.WriteString(newline + newline)
 	}
-
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	me.WriteString(newline + "    let tmp_fn;")
-	used_subs_map := false
+	me.usedSubsMap = false
 	if htm_body != nil {
 		if err = me.walkBodyAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
 	me.WriteString(newline + "  }")
-	if used_subs_map {
+	if me.usedSubsMap {
 		me.WriteString(newline + newline + "  subs_" + me.zuiFileIdent + " = new Map();")
 	}
 
@@ -250,7 +249,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 			case html.ElementNode:
 				if child_node.Data == ("zui_" + me.zuiFileIdent) {
 
-					continue
+					// continue
 				}
 
 				node_var_name := "node_" + replDashToUnderscore.Replace(child_node.Data) + "_" + strconv.Itoa(level) + "_" + strconv.Itoa(i) + "_" + me.zuiFileIdent

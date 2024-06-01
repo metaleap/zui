@@ -19,6 +19,9 @@ export class App extends HTMLElement {
     node_p_0_0_2dw3yk.append("This is a paragraph.");
     shadowRoot.appendChild(node_p_0_0_2dw3yk);
     shadowRoot.append("\n");
+    const node_zui_2dw3yk_0_2_2dw3yk = document.createElement("zui_2dw3yk");
+    node_zui_2dw3yk_0_2_2dw3yk.setAttribute("zui-tag-name", ''+"Nested");
+    shadowRoot.appendChild(node_zui_2dw3yk_0_2_2dw3yk);
     shadowRoot.append("\n\n");
     const node_style_0_4_2dw3yk = document.createElement("style");
     node_style_0_4_2dw3yk.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
