@@ -7,9 +7,9 @@ export class App extends HTMLElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_h1_0_0_1w65z2 = document.createElement("h1");
-    node_h1_0_0_1w65z2.append("Welcome!");
-    shadowRoot.appendChild(node_h1_0_0_1w65z2);
+    const el1 = document.createElement("h1");
+    el1.append("Welcome!");
+    shadowRoot.appendChild(el1);
   }
   constructor() {
     super();

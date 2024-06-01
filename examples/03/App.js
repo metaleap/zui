@@ -38,14 +38,16 @@ zuiOnPropChanged(name) {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const node_img_0_0_2248e2 = document.createElement("img");
-    node_img_0_0_2248e2.setAttribute("alt",  "Rick");
+    const el1 = document.createElement("img");
+    el1.setAttribute("alt",  "Rick");
     const fn1 = (function() { return this.src; }).bind(this);
-    node_img_0_0_2248e2.setAttribute("src",   (fn1()) );
-    shadowRoot.appendChild(node_img_0_0_2248e2);
+    el1.setAttribute("src",   (fn1()) );
+    //this.zuiSub('src', ((fn, el) => (() => { el.nodeValue = fn(); }).bind(this)).bind(this)(fn1, span_var_name));
+    shadowRoot.appendChild(el1);
   }
   constructor() {
     super();
+    this.#subs = new Map();
   }
 
   static ZuiTagName = "zui-app_224abhbqzum0a1ljqpikvf8s3y2uqqiwf578t4s2b1paxznc07jc1eg08e2";

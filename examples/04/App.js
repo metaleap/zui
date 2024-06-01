@@ -7,13 +7,13 @@ export class App extends HTMLElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_p_0_0_bz0jw4 = document.createElement("p");
-    node_p_0_0_bz0jw4.append("This is a paragraph.");
-    shadowRoot.appendChild(node_p_0_0_bz0jw4);
+    const el1 = document.createElement("p");
+    el1.append("This is a paragraph.");
+    shadowRoot.appendChild(el1);
     shadowRoot.append("\n\n");
-    const node_style_0_2_bz0jw4 = document.createElement("style");
-    node_style_0_2_bz0jw4.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
-    shadowRoot.appendChild(node_style_0_2_bz0jw4);
+    const el2 = document.createElement("style");
+    el2.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
+    shadowRoot.appendChild(el2);
   }
   constructor() {
     super();

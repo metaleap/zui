@@ -7,9 +7,9 @@ export class Nested extends HTMLElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiCreateHTMLElements(shadowRoot) {
-    const node_p_0_0_p4uhoo = document.createElement("p");
-    node_p_0_0_p4uhoo.append("This is another paragraph.");
-    shadowRoot.appendChild(node_p_0_0_p4uhoo);
+    const el1 = document.createElement("p");
+    el1.append("This is another paragraph.");
+    shadowRoot.appendChild(el1);
   }
   constructor() {
     super();
