@@ -129,7 +129,9 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 	for {
 		idx_close := strings.IndexByte(htmlText, '}')
 		if idx_close < 0 {
-			ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
+			if htmlText != "" {
+				ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
+			}
 			return
 		}
 		idx_open := strings.LastIndexByte(htmlText[:idx_close], '{')

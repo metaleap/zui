@@ -18,7 +18,7 @@ greetName = "zui";
     let tmp_fn;
     const node_h1_0_0_371ehz = document.createElement("h1");
     node_h1_0_0_371ehz.append("Hello ");
-    tmp_fn = (function() { return '' + this.greetName.toUpperCase(); }).bind(this);
+    tmp_fn = (function() { return this.greetName.toUpperCase(); }).bind(this);
     const txt_3molke = document.createTextNode(tmp_fn());
     this.subs_371ehz.set(txt_3molke, tmp_fn);
     node_h1_0_0_371ehz.append(txt_3molke);

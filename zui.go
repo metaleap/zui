@@ -2,7 +2,6 @@ package zui
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -246,7 +245,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					} else if part.expr != nil {
 						js_src := strings.TrimSuffix(jsString(part.expr), ";")
 						span_var_name := "txt_" + shortenedLen6(ContentHashStr([]byte(js_src)))
-						me.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
+						me.WriteString(pref + "tmp_fn = (function() { return " + js_src + "; }).bind(this);")
 						if part.exprAsHtml {
 							me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
 							me.WriteString(pref + span_var_name + ".innerHTML = tmp_fn();")
@@ -293,8 +292,8 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 								return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
 							}
 							js_src := strings.TrimSuffix(jsString(part.expr), ";")
-							attr_val_js_funcs += (pref + "const tmp_fn_" + strconv.Itoa(i) + " = (function() { return '' + " + js_src + "; }).bind(this);")
-							attr_val_js_expr += " (tmp_fn_" + strconv.Itoa(i) + "()) "
+							attr_val_js_funcs += (pref + "tmp_fn = (function() { return " + js_src + "; }).bind(this);")
+							attr_val_js_expr += " (tmp_fn()) "
 						} else if part.text != "" {
 							attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
 							attr_val_js_expr += strconv.Quote(part.text)
@@ -303,10 +302,9 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					me.WriteString(attr_val_js_funcs)
 					switch {
 					default:
-						me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", '' + " + attr_val_js_expr + ");")
+						me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ",  " + attr_val_js_expr + ");")
 					case strings.HasPrefix(attr.Key, "on:"):
 						if len(parts) != 1 || parts[0].expr == nil {
-							println(len(parts), fmt.Sprintf("\n>>>%#v<<<\n", parts))
 							return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
 						}
 						evt_name := strings.TrimSpace(attr.Key[len("on:"):])
