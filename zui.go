@@ -31,6 +31,7 @@ type zui2js struct {
 
 	topLevelDecls map[string]js.IExpr
 	allImports    map[string]string
+	usedSubs      bool
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
@@ -99,10 +100,6 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
 	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
 
-	me.WriteString(newline + "  constructor() {")
-	me.WriteString(newline + "    super();")
-	me.WriteString(newline + "  }")
-
 	me.WriteString(newline + "  connectedCallback() {")
 	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
 	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
@@ -130,6 +127,12 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		if err = me.walkBodyAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
+	}
+	me.WriteString(newline + "  }")
+	me.WriteString(newline + "  constructor() {")
+	me.WriteString(newline + "    super();")
+	if me.usedSubs {
+		me.WriteString(newline + "    this.#subs = new Map();")
 	}
 	me.WriteString(newline + "  }")
 
@@ -189,7 +192,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		switch it := stmt.(type) {
 		case *js.FuncDecl:
 			name := it.Name.String()
-			if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
 				return err
 			}
 			src_fn := jsString(it)
@@ -202,12 +205,12 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				if item.Default != nil {
 					switch it := item.Default.(type) {
 					case *js.FuncDecl:
-						if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+						if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
 							return err
 						}
 						item.Default = it
 					case *js.ArrowFunc:
-						if err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+						if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
 							return err
 						}
 						item.Default = it
@@ -230,16 +233,16 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		me.WriteString(`
 #subs = null;
 zuiSub(name, fn) {
-  let arr = this.subs.get(name);
-  if (!arr)
+  let arr = this.#subs.get(name);
+  if (!(arr && arr.push))
     arr = [fn];
   else
     arr.push(fn);
-  this.subs.set(name, arr);
+  this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  if (this.subs) {
-    const subs = this.subs.get(name);
+  if (this.#subs) {
+    const subs = this.#subs.get(name);
     if (subs && subs.length) {
       for (const fn of subs)
         fn.bind(this)();
@@ -277,6 +280,10 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							me.WriteString(pref + span_var_name + ".innerHTML = tmp_fn();")
 						} else {
 							me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
+						}
+						for _, top_level_decl_name := range part.exprTopLevelRefs {
+							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', ((fn, el) => (() => { el." + ıf(part.exprAsHtml, "innerHTML", "nodeValue") + " = fn(); }).bind(this)).bind(this)(tmp_fn, " + span_var_name + "));")
+							me.usedSubs = true
 						}
 						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 					}

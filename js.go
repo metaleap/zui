@@ -14,20 +14,21 @@ func jsString(node js.INode) string {
 	return buf.String()
 }
 
-func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) error {
+func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) ([]string, error) {
 	me := jsFuncASTRewriteWalker{
 		allTopLevelDecls: state.topLevelDecls,
 		funcName:         funcName,
 		zuiFilePath:      state.zuiFilePath,
 		gatherMode:       true,
 		rewrites:         map[js.IExpr]js.IExpr{},
+		allTopLevelRefs:  map[string]bool{},
 	}
 	js.Walk(&me, funcBody)
 	if me.err == nil {
 		me.gatherMode = false
 		js.Walk(&me, funcBody)
 	}
-	return me.err
+	return orderedMapKeys(me.allTopLevelRefs), me.err
 }
 
 type jsFuncASTRewriteWalker struct {
@@ -36,8 +37,9 @@ type jsFuncASTRewriteWalker struct {
 	gatherMode       bool
 	zuiFilePath      string
 
-	err      error
-	rewrites map[js.IExpr]js.IExpr
+	err             error
+	rewrites        map[js.IExpr]js.IExpr
+	allTopLevelRefs map[string]bool
 }
 
 func (*jsFuncASTRewriteWalker) Exit(js.INode) {}
@@ -64,6 +66,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 	case *js.Var:
 		name := string(node.Data)
 		if _, is_top_level := me.allTopLevelDecls[name]; is_top_level {
+			me.allTopLevelRefs[name] = true
 			me.rewrites[node] = &js.DotExpr{
 				X: &js.Var{Data: []byte("this")},
 				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(name)},

@@ -119,9 +119,10 @@ func (me *zui2js) htmlTopLevelScriptElement(hayStack *html.Node, curScript *html
 }
 
 type htmlTextAndExprsSplitItem struct {
-	text       string
-	expr       js.INode
-	exprAsHtml bool
+	text             string
+	expr             js.INode
+	exprAsHtml       bool
+	exprTopLevelRefs []string
 }
 
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
@@ -155,9 +156,10 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if err != nil {
 			return nil, errors.New(me.zuiFilePath + ": " + err.Error() + " in JS expr '" + src_js + "'")
 		}
-		if err = jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt); err != nil {
+		all_top_level_refs, err := jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt)
+		if err != nil {
 			return nil, err
 		}
-		ret = append(ret, htmlTextAndExprsSplitItem{expr: js_ast, exprAsHtml: is_html})
+		ret = append(ret, htmlTextAndExprsSplitItem{expr: js_ast, exprAsHtml: is_html, exprTopLevelRefs: all_top_level_refs})
 	}
 }
