@@ -47,7 +47,7 @@ func (me *jsFuncASTRewriteWalker) Enter(node js.INode) js.IVisitor {
 	} else {
 		me.rewrite(node)
 	}
-	return ıf(me.err == nil, me, nil)
+	return ıf[js.IVisitor](me.err == nil, me, nil)
 }
 
 func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
@@ -74,8 +74,8 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 
 func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {
 	jsRewrite(node, func(node js.INode) js.INode {
-		if expr, _ := node.(js.IExpr); expr != nil {
-			return ıf(me.err == nil, me.rewrites[expr], nil)
+		if expr, _ := node.(js.IExpr); me.err == nil && expr != nil {
+			return me.rewrites[expr]
 		}
 		return nil
 	})
@@ -110,7 +110,7 @@ func (me *jsWholeASTRewriter) Enter(node js.INode) js.IVisitor {
 	} else {
 		me.rewrite(node)
 	}
-	return ıf(me.err == nil, me, nil)
+	return ıf[js.IVisitor](me.err == nil, me, nil)
 }
 
 func (me *jsWholeASTRewriter) gather(node js.INode) {
