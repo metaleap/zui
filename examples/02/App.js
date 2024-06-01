@@ -38,12 +38,11 @@ zuiOnPropChanged(name) {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    let tmp_fn;
     const node_h1_0_0_371ehz = document.createElement("h1");
     node_h1_0_0_371ehz.append("Hello ");
-    tmp_fn = (function() { return this.greetName.toUpperCase(); }).bind(this);
-    const txt_3molke = document.createTextNode(tmp_fn());
-    this.zuiSub('greetName', ((fn, el) => (() => { el.nodeValue = fn(); }).bind(this)).bind(this)(tmp_fn, txt_3molke));
+    const fn1 = (function() { return this.greetName.toUpperCase(); }).bind(this);
+    const txt_3molke = document.createTextNode(fn1());
+    this.zuiSub('greetName', ((fn, el) => (() => { el.nodeValue = fn(); }).bind(this)).bind(this)(fn1, txt_3molke));
     node_h1_0_0_371ehz.append(txt_3molke);
     node_h1_0_0_371ehz.append("!");
     shadowRoot.appendChild(node_h1_0_0_371ehz);

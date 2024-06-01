@@ -38,12 +38,11 @@ zuiOnPropChanged(name) {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    let tmp_fn;
     const node_p_0_0_2escw5 = document.createElement("p");
-    tmp_fn = (function() { return this.string; }).bind(this);
+    const fn1 = (function() { return this.string; }).bind(this);
     const txt_et3fx7 = document.createElement('span');
-    txt_et3fx7.innerHTML = tmp_fn();
-    this.zuiSub('string', ((fn, el) => (() => { el.innerHTML = fn(); }).bind(this)).bind(this)(tmp_fn, txt_et3fx7));
+    txt_et3fx7.innerHTML = fn1();
+    this.zuiSub('string', ((fn, el) => (() => { el.innerHTML = fn(); }).bind(this)).bind(this)(fn1, txt_et3fx7));
     node_p_0_0_2escw5.append(txt_et3fx7);
     shadowRoot.appendChild(node_p_0_0_2escw5);
   }

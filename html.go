@@ -2,7 +2,6 @@ package zui
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -26,7 +25,7 @@ func htmlSrc(node *html.Node) string {
 	case html.ElementNode, html.DocumentNode:
 		ret := "<" + node.Data
 		for _, attr := range node.Attr {
-			ret += " " + attr.Key + "=" + strconv.Quote(attr.Val)
+			ret += " " + attr.Key + "=" + strQ(attr.Val)
 		}
 		if node.FirstChild == nil {
 			ret += " />"

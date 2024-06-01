@@ -38,11 +38,10 @@ zuiOnPropChanged(name) {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    let tmp_fn;
     const node_img_0_0_2248e2 = document.createElement("img");
     node_img_0_0_2248e2.setAttribute("alt",  "Rick");
-    tmp_fn = (function() { return this.src; }).bind(this);
-    node_img_0_0_2248e2.setAttribute("src",   (tmp_fn()) );
+    const fn1 = (function() { return this.src; }).bind(this);
+    node_img_0_0_2248e2.setAttribute("src",   (fn1()) );
     shadowRoot.appendChild(node_img_0_0_2248e2);
   }
   constructor() {

@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+var (
+	itoa  = strconv.Itoa
+	strQ  = strconv.Quote
+	strLo = strings.ToLower
+)
+
 func ıf[T any](b bool, t T, f T) T {
 	if b {
 		return t

@@ -11,7 +11,6 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    let tmp_fn;
     const node_p_0_0_2dw3yk = document.createElement("p");
     node_p_0_0_2dw3yk.append("This is a paragraph.");
     shadowRoot.appendChild(node_p_0_0_2dw3yk);
