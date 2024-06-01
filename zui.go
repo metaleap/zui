@@ -240,19 +240,21 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					return err
 				}
 				for _, part := range parts {
-					switch part := part.(type) {
-					case string:
-						me.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part) + ");")
-					case js.INode:
-						js_src := strings.TrimSuffix(jsString(part), ";")
+					if part.text != "" {
+						me.WriteString(pref + parentNodeVarName + ".append(" + strconv.Quote(part.text) + ");")
+					} else if part.expr != nil {
+						js_src := strings.TrimSuffix(jsString(part.expr), ";")
 						span_var_name := "txt_" + shortenedLen6(ContentHashStr([]byte(js_src)))
 						me.WriteString(pref + "tmp_fn = (function() { return '' + " + js_src + "; }).bind(this);")
-						me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
+						if part.exprAsHtml {
+							me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
+							me.WriteString(pref + span_var_name + ".innerHTML = tmp_fn();")
+						} else {
+							me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(tmp_fn());")
+						}
 						me.WriteString(pref + "this.subs_" + me.zuiFileIdent + ".set(" + span_var_name + ", tmp_fn);")
 						me.usedSubsMap = true
 						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
-					default:
-						panic(part)
 					}
 				}
 			case html.ElementNode:
@@ -280,11 +282,13 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", ''")
 					for _, part := range parts {
 						me.WriteByte('+')
-						switch part := part.(type) {
-						case string:
-							me.WriteString(strconv.Quote(part))
-						case js.INode:
-							js_src := strings.TrimSuffix(jsString(part), ";")
+						if part.text != "" {
+							me.WriteString(strconv.Quote(part.text))
+						} else if part.expr != nil {
+							if part.exprAsHtml {
+								return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
+							}
+							js_src := strings.TrimSuffix(jsString(part.expr), ";")
 							me.WriteString(js_src)
 						}
 					}

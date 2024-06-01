@@ -118,12 +118,18 @@ func (me *zui2js) htmlTopLevelScriptElement(hayStack *html.Node, curScript *html
 	return curScript, nil
 }
 
-func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []any, _ error) {
+type htmlTextAndExprsSplitItem struct {
+	text       string
+	expr       js.INode
+	exprAsHtml bool
+}
+
+func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
 	html_text_orig := htmlText
 	for {
 		idx_close := strings.IndexByte(htmlText, '}')
 		if idx_close < 0 {
-			ret = append(ret, htmlText)
+			ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
 			return
 		}
 		idx_open := strings.LastIndexByte(htmlText[:idx_close], '{')
@@ -131,9 +137,13 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []any, _ error) 
 			return nil, errors.New(me.zuiFilePath + ": unmatched closing brace in '" + html_text_orig + "'")
 		}
 		if pre := htmlText[:idx_open]; pre != "" {
-			ret = append(ret, pre)
+			ret = append(ret, htmlTextAndExprsSplitItem{text: pre})
 		}
-		src_js := htmlText[:idx_close][idx_open+1:]
+		src_js := strings.TrimSpace(htmlText[:idx_close][idx_open+1:])
+		is_html := strings.HasPrefix(src_js, "@html ") || strings.HasPrefix(src_js, "@html\t") || strings.HasPrefix(src_js, "@html\r") || strings.HasPrefix(src_js, "@html\n")
+		if is_html {
+			src_js = strings.TrimSpace(src_js[len("@html"):])
+		}
 		if src_js == "" {
 			return nil, errors.New(me.zuiFilePath + ": expression expected inside the '{}' in '" + html_text_orig + "'")
 		}
@@ -146,6 +156,6 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []any, _ error) 
 		if err = jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt); err != nil {
 			return nil, err
 		}
-		ret = append(ret, js_ast)
+		ret = append(ret, htmlTextAndExprsSplitItem{expr: js_ast, exprAsHtml: is_html})
 	}
 }

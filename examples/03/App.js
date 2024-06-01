@@ -18,7 +18,7 @@ src = '03/image.png';
     let tmp_fn;
     const node_img_0_0_2248e2 = document.createElement("img");
     node_img_0_0_2248e2.setAttribute("alt", ''+"Rick");
-    node_img_0_0_2248e2.setAttribute("src", ''+this.src+"");
+    node_img_0_0_2248e2.setAttribute("src", ''+this.src+);
     shadowRoot.appendChild(node_img_0_0_2248e2);
   }
 
