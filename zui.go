@@ -2,6 +2,7 @@ package zui
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -274,15 +275,20 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 
 				me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strconv.Quote(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
+					if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
+						attr.Val = attr.Key
+						attr.Key = strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:])
+					}
+
 					parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
 					if err != nil {
 						return err
 					}
 
-					attr_val_js_expr, attr_val_js_funcs := "''", ""
+					attr_val_js_expr, attr_val_js_funcs := "", ""
 					for _, part := range parts {
 						if part.expr != nil {
-							attr_val_js_expr += " + "
+							attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
 							if part.exprAsHtml {
 								return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
 							}
@@ -290,12 +296,22 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							attr_val_js_funcs += (pref + "const tmp_fn_" + strconv.Itoa(i) + " = (function() { return '' + " + js_src + "; }).bind(this);")
 							attr_val_js_expr += " (tmp_fn_" + strconv.Itoa(i) + "()) "
 						} else if part.text != "" {
-							attr_val_js_expr += " + "
+							attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
 							attr_val_js_expr += strconv.Quote(part.text)
 						}
 					}
 					me.WriteString(attr_val_js_funcs)
-					me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", " + attr_val_js_expr + ");")
+					switch {
+					default:
+						me.WriteString(pref + node_var_name + ".setAttribute(" + strconv.Quote(attr.Key) + ", '' + " + attr_val_js_expr + ");")
+					case strings.HasPrefix(attr.Key, "on:"):
+						if len(parts) != 1 || parts[0].expr == nil {
+							println(len(parts), fmt.Sprintf("\n>>>%#v<<<\n", parts))
+							return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
+						}
+						evt_name := strings.TrimSpace(attr.Key[len("on:"):])
+						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', " + attr_val_js_expr + ");")
+					}
 				}
 				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
 					return err
