@@ -13,14 +13,20 @@ export class App extends HTMLElement {
   zuiCreateHTMLElements(shadowRoot) {
     const el1 = document.createElement(Nested.ZuiTagName);
     const fn1 = (function() { return 42; }).bind(this);
-    const fn2 = () =>  (fn1()) ;
-    el1.setAttribute("answer",  fn2());
+    el1.setAttribute("answer",  fn1());
     shadowRoot.appendChild(el1);
   }
   constructor() {
     super();
   }
-  zuiOnPropChanged(name) {}
+zuiOnPropChanged(name) {}
+zuiSet(k, n, v) {
+  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
+    this[k] = v;
+    this.zuiOnPropChanged(n);
+  }
+}
+
 
   static ZuiTagName = "zui-app_3pfxx99qxswzz3e8ij34fkr24l2z2cok5z5s89ca1mrcwgbmmloyvm6zk";
 }

@@ -3,6 +3,7 @@ package zui
 import (
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -113,13 +114,6 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
 	me.WriteString(newline + "  }")
 
-	// me.WriteString(newline + "  disconnectedCallback() {")
-	// me.WriteString(newline + "  }")
-	// me.WriteString(newline + "  adoptedCallback() {")
-	// me.WriteString(newline + "  }")
-	// me.WriteString(newline + "  attributeChangedCallback() {")
-	// me.WriteString(newline + "  }")
-
 	// deal with the <script>
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
@@ -159,7 +153,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "  }")
 
 	if !me.usedSubs {
-		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
+		me.WriteString(newline + "zuiOnPropChanged(name) {}")
 	} else {
 		me.WriteString(`
 #subs = new Map();
@@ -172,16 +166,19 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  if (this.#subs) {
-    const subs = this.#subs.get(name);
-    if (subs) {
-      for (const fn of subs)
-        fn();
-    }
-  }
+  for (const fn of ((this.#subs.get(name)) ?? []))
+    fn();
 }
 `)
 	}
+	me.WriteString(`
+zuiSet(k, n, v) {
+  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
+    this[k] = v;
+    this.zuiOnPropChanged(n);
+  }
+}
+`)
 
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strQ("zui-"+strLo(zui_class_name)+"_"+zuiFileHash) + ";")
@@ -302,12 +299,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 					me.WriteByte(';')
 				}
 				me.WriteString(pref + "get " + name_prop + "() { return this." + name_var + "; }")
-				me.WriteString(pref + "set " + name_prop + "(v) {")
-				me.WriteString(pref + "  if (((typeof this." + name_var + ") === 'object') || ((typeof v) === 'object') || !Object.is(this." + name_var + ", v)) {")
-				me.WriteString(pref + "    this." + name_var + " = v;")
-				me.WriteString(pref + "    this.zuiOnPropChanged('" + name_orig + "');")
-				me.WriteString(pref + "  }")
-				me.WriteString(pref + "}")
+				me.WriteString(pref + "set " + name_prop + "(v) { this.zuiSet('" + name_var + "', '" + name_orig + "', v) }")
 			}
 		case *js.LabelledStmt:
 			if expr := me.topLevelReactiveDecls[stmt]; expr != nil {
@@ -334,7 +326,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 	next_fn := func() string { me.idxFn++; return "fn" + itoa(me.idxFn) }
 	next_el := func() string { me.idxEl++; return "el" + itoa(me.idxEl) }
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
-		for child_node, i := parentNode.FirstChild, 0; child_node != nil; child_node, i = child_node.NextSibling, i+1 {
+		for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
 			switch child_node.Type {
 			case html.TextNode:
 				if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
@@ -387,54 +379,69 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						continue
 					}
 
+					spread := ""
 					if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
-						attr.Val = attr.Key
-						attr.Key = strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:])
-					}
-
-					parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
-					if err != nil {
-						return err
-					}
-
-					fn_name, attr_val_js_expr, attr_val_js_funcs := "", "", ""
-					for _, part := range parts {
-						if part.expr != nil {
-							attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
-							if part.exprAsHtml {
-								return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
-							}
-							js_src := strings.TrimSuffix(jsString(part.expr), ";")
-							fn_name = next_fn()
-							attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
-							attr_val_js_expr += " (" + fn_name + "()) "
-						} else if part.text != "" {
-							attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
-							attr_val_js_expr += strQ(part.text)
+						if attr_key := strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:]); strings.HasPrefix(attr_key, "...") {
+							spread = strings.TrimSpace(attr_key[len("..."):])
+						} else {
+							attr.Val = attr.Key
+							attr.Key = attr_key
 						}
 					}
-					me.WriteString(attr_val_js_funcs)
-					switch {
-					default:
-						fn_name_attr := next_fn()
-						me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
-						me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
-						attr_decl_sub_done := map[string]bool{}
+
+					if spread != "" {
+						ref := "this." + ıf(slices.Contains(me.attrExports, spread), "", "#") + spread
+						me.WriteString(pref + "for (const prop in " + ref + ") {")
+						me.WriteString(pref + "  " + node_var_name + ".setAttribute(prop, " + ref + "[prop]);")
+						me.WriteString(pref + "}")
+					} else {
+						parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
+						if err != nil {
+							return err
+						}
+						fn_name, attr_val_js_expr, attr_val_js_funcs := "", "", ""
 						for _, part := range parts {
-							for _, top_level_decl_name := range part.exprTopLevelRefs {
-								if attr_decl_sub_done[top_level_decl_name] {
-									continue
+							if part.expr != nil {
+								attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
+								if part.exprAsHtml {
+									return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
 								}
-								me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
-								me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
+								js_src := strings.TrimSuffix(jsString(part.expr), ";")
+								fn_name = next_fn()
+								attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+								attr_val_js_expr += " (" + fn_name + "()) "
+							} else if part.text != "" {
+								attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
+								attr_val_js_expr += strQ(part.text)
 							}
 						}
-					case strings.HasPrefix(attr.Key, "on:"):
-						if len(parts) != 1 || parts[0].expr == nil {
-							return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
+						me.WriteString(attr_val_js_funcs)
+						switch {
+						default:
+							fn_name_attr := next_fn()
+							if len(parts) == 1 && parts[0].expr != nil {
+								fn_name_attr = fn_name
+							} else {
+								me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
+							}
+							me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
+							attr_decl_sub_done := map[string]bool{}
+							for _, part := range parts {
+								for _, top_level_decl_name := range part.exprTopLevelRefs {
+									if attr_decl_sub_done[top_level_decl_name] {
+										continue
+									}
+									me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
+									me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
+								}
+							}
+						case strings.HasPrefix(attr.Key, "on:"):
+							if len(parts) != 1 || parts[0].expr == nil {
+								return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
+							}
+							evt_name := strings.TrimSpace(attr.Key[len("on:"):])
+							me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "().bind(this)()).bind(this));")
 						}
-						evt_name := strings.TrimSpace(attr.Key[len("on:"):])
-						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "().bind(this)()).bind(this));")
 					}
 				}
 

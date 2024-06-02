@@ -1,0 +1,13 @@
+<!--https://learn.svelte.dev/tutorial/spread-props-->
+<script>
+    import PackageInfo from "./PackageInfo.zui";
+
+    const pkg = {
+        name: "svelte",
+        speed: "blazing",
+        version: 4,
+        website: "https://svelte.dev",
+    };
+</script>
+
+<PackageInfo {...pkg} />

@@ -14,7 +14,14 @@ export class Nested extends HTMLElement {
   constructor() {
     super();
   }
-  zuiOnPropChanged(name) {}
+zuiOnPropChanged(name) {}
+zuiSet(k, n, v) {
+  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
+    this[k] = v;
+    this.zuiOnPropChanged(n);
+  }
+}
+
 
   static ZuiTagName = "zui-nested_p4uv49rgo5fi3cxcikmk7wguu1pje9tw3br7it23unvx8j5wjvc2lzhoo";
 }

@@ -10,12 +10,7 @@ export class App extends HTMLElement {
 
   #v0 = [1, 2, 3, 4];
   get #numbers() { return this.#v0; }
-  set #numbers(v) {
-    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
-      this.#v0 = v;
-      this.zuiOnPropChanged('numbers');
-    }
-  }
+  set #numbers(v) { this.zuiSet('#v0', 'numbers', v) }
 
 #addNumber() {
     {
@@ -62,12 +57,14 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  if (this.#subs) {
-    const subs = this.#subs.get(name);
-    if (subs) {
-      for (const fn of subs)
-        fn();
-    }
+  for (const fn of ((this.#subs.get(name)) ?? []))
+    fn();
+}
+
+zuiSet(k, n, v) {
+  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
+    this[k] = v;
+    this.zuiOnPropChanged(n);
   }
 }
 

@@ -10,12 +10,7 @@ export class App extends HTMLElement {
 
   #v0 = '03/image.png';
   get #src() { return this.#v0; }
-  set #src(v) {
-    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
-      this.#v0 = v;
-      this.zuiOnPropChanged('src');
-    }
-  }
+  set #src(v) { this.zuiSet('#v0', 'src', v) }
 
 
   zuiCreateHTMLElements(shadowRoot) {
@@ -23,9 +18,8 @@ export class App extends HTMLElement {
     const fn1 = () => "Rick";
     el1.setAttribute("alt",  fn1());
     const fn2 = (function() { return this.#src; }).bind(this);
-    const fn3 = () =>  (fn2()) ;
-    el1.setAttribute("src",  fn3());
-    this.zuiSub('src', () => el1.setAttribute("src",  fn3()));
+    el1.setAttribute("src",  fn2());
+    this.zuiSub('src', () => el1.setAttribute("src",  fn2()));
     shadowRoot.appendChild(el1);
   }
   constructor() {
@@ -41,12 +35,14 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  if (this.#subs) {
-    const subs = this.#subs.get(name);
-    if (subs) {
-      for (const fn of subs)
-        fn();
-    }
+  for (const fn of ((this.#subs.get(name)) ?? []))
+    fn();
+}
+
+zuiSet(k, n, v) {
+  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
+    this[k] = v;
+    this.zuiOnPropChanged(n);
   }
 }
 
