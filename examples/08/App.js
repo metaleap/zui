@@ -47,8 +47,9 @@ increment() {
     this.zuiSub('count', (() => { el5.nodeValue = fn4(); }).bind(this));
     el4.append(el5);
     el4.append(" doubled is ");
-    const fn5 = (function() { return doubled; }).bind(this);
+    const fn5 = (function() { return this.doubled; }).bind(this);
     const el6 = document.createTextNode(fn5());
+    this.zuiSub('doubled', (() => { el6.nodeValue = fn5(); }).bind(this));
     el4.append(el6);
     shadowRoot.appendChild(el4);
   }

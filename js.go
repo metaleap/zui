@@ -20,12 +20,11 @@ func jsAssigneeNameInLabelledStmt(stmt *js.LabelledStmt) string {
 
 func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) ([]string, error) {
 	me := jsFuncASTRewriteWalker{
-		allTopLevelDecls: state.topLevelDecls,
-		funcName:         funcName,
-		zuiFilePath:      state.zuiFilePath,
-		gatherMode:       true,
-		rewrites:         map[js.IExpr]js.IExpr{},
-		allTopLevelRefs:  map[string]bool{},
+		state:           state,
+		funcName:        funcName,
+		gatherMode:      true,
+		rewrites:        map[js.IExpr]js.IExpr{},
+		allTopLevelRefs: map[string]bool{},
 	}
 	js.Walk(&me, funcBody)
 	if me.err == nil {
@@ -36,10 +35,9 @@ func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *j
 }
 
 type jsFuncASTRewriteWalker struct {
-	allTopLevelDecls map[string]js.IExpr
-	funcName         string
-	gatherMode       bool
-	zuiFilePath      string
+	state      *zui2js
+	funcName   string
+	gatherMode bool
 
 	err             error
 	rewrites        map[js.IExpr]js.IExpr
@@ -61,15 +59,15 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 	case *js.VarDecl:
 		for _, item := range node.List {
 			name := jsString(item.Binding)
-			if _, is_top_level := me.allTopLevelDecls[name]; is_top_level {
-				if me.err = errors.New(me.zuiFilePath + ": top-level decl '" + name + "' shadowed in func '" + me.funcName + "'"); me.err != nil {
+			if me.isTopLevel(name) {
+				if me.err = errors.New(me.state.zuiFilePath + ": top-level decl '" + name + "' shadowed in func '" + me.funcName + "'"); me.err != nil {
 					return
 				}
 			}
 		}
 	case *js.Var:
 		name := string(node.Data)
-		if _, is_top_level := me.allTopLevelDecls[name]; is_top_level {
+		if me.isTopLevel(name) {
 			me.allTopLevelRefs[name] = true
 			me.rewrites[node] = &js.DotExpr{
 				X: &js.Var{Data: []byte("this")},
@@ -77,6 +75,19 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 			}
 		}
 	}
+}
+
+func (me *jsFuncASTRewriteWalker) isTopLevel(name string) bool {
+	_, is_top_level := me.state.topLevelDecls[name]
+	if !is_top_level {
+		for k := range me.state.topLevelReactiveDecls {
+			if jsAssigneeNameInLabelledStmt(k) == name {
+				is_top_level = true
+				break
+			}
+		}
+	}
+	return is_top_level
 }
 
 func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {
