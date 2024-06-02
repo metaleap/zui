@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 31h8ys4i60kmd3o9tme4foa1se13invk5pebgv1133hctubzid61mdqi9p
+// Source file content hash: 1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -16,6 +16,7 @@ export class App extends HTMLElement {
       this.zuiOnPropChanged('count');
     }
   }
+  get doubled() { return this.count * 2 }
 
 increment() {
     this.count += 1;
@@ -39,6 +40,17 @@ increment() {
     el1.append(el3);
     el1.append("\n");
     shadowRoot.appendChild(el1);
+    shadowRoot.append("\n\n");
+    const el4 = document.createElement("p");
+    const fn4 = (function() { return this.count; }).bind(this);
+    const el5 = document.createTextNode(fn4());
+    this.zuiSub('count', (() => { el5.nodeValue = fn4(); }).bind(this));
+    el4.append(el5);
+    el4.append(" doubled is ");
+    const fn5 = (function() { return doubled; }).bind(this);
+    const el6 = document.createTextNode(fn5());
+    el4.append(el6);
+    shadowRoot.appendChild(el4);
   }
   constructor() {
     super();
@@ -63,6 +75,6 @@ zuiOnPropChanged(name) {
 }
 
 
-  static ZuiTagName = "zui-app_31h8ys4i60kmd3o9tme4foa1se13invk5pebgv1133hctubzid61mdqi9p";
+  static ZuiTagName = "zui-app_1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6";
 }
 customElements.define(App.ZuiTagName, App);

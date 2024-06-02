@@ -14,6 +14,10 @@ func jsString(node js.INode) string {
 	return buf.String()
 }
 
+func jsAssigneeNameInLabelledStmt(stmt *js.LabelledStmt) string {
+	return string(stmt.Value.(*js.ExprStmt).Value.(*js.BinaryExpr).X.(*js.Var).Name())
+}
+
 func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) ([]string, error) {
 	me := jsFuncASTRewriteWalker{
 		allTopLevelDecls: state.topLevelDecls,
@@ -72,6 +76,8 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(name)},
 			}
 		}
+	case *js.LabelledStmt:
+		// name := jsAssigneeNameInLabelledStmt(node)
 	}
 }
 

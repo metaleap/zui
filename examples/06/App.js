@@ -33,7 +33,7 @@ export class App extends HTMLElement {
 #subs = new Map();
 zuiSub(name, fn) {
   let arr = this.#subs.get(name);
-  if (!(arr && arr.push))
+  if (!arr)
     arr = [fn];
   else
     arr.push(fn);
@@ -42,7 +42,7 @@ zuiSub(name, fn) {
 zuiOnPropChanged(name) {
   if (this.#subs) {
     const subs = this.#subs.get(name);
-    if (subs && subs.length) {
+    if (subs) {
       for (const fn of subs)
         fn();
     }

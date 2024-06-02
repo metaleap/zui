@@ -28,21 +28,23 @@ type zui2js struct {
 
 	// in-flight state
 
-	topLevelDecls map[string]js.IExpr
-	allImports    map[string]string
-	usedSubs      bool
-	idxFn         int
-	idxEl         int
+	topLevelDecls         map[string]js.IExpr
+	topLevelReactiveDecls map[*js.LabelledStmt]js.IExpr
+	allImports            map[string]string
+	usedSubs              bool
+	idxFn                 int
+	idxEl                 int
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
 	me := zui2js{
-		zuiFilePath:    zuiFilePath,
-		zuiFileHash:    zuiFileHash,
-		zuiFileIdent:   shortenedLen6(zuiFileHash),
-		zuiFileSrcOrig: zuiFileSrc,
-		topLevelDecls:  map[string]js.IExpr{},
-		allImports:     map[string]string{},
+		zuiFilePath:           zuiFilePath,
+		zuiFileHash:           zuiFileHash,
+		zuiFileIdent:          shortenedLen6(zuiFileHash),
+		zuiFileSrcOrig:        zuiFileSrc,
+		topLevelDecls:         map[string]js.IExpr{},
+		topLevelReactiveDecls: map[*js.LabelledStmt]js.IExpr{},
+		allImports:            map[string]string{},
 	}
 
 	src_htm, err := me.htmlFixupSelfClosingZuiTagsPriorToParsing()
@@ -139,7 +141,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 #subs = new Map();
 zuiSub(name, fn) {
   let arr = this.#subs.get(name);
-  if (!(arr && arr.push))
+  if (!arr)
     arr = [fn];
   else
     arr.push(fn);
@@ -148,7 +150,7 @@ zuiSub(name, fn) {
 zuiOnPropChanged(name) {
   if (this.#subs) {
     const subs = this.#subs.get(name);
-    if (subs && subs.length) {
+    if (subs) {
       for (const fn of subs)
         fn();
     }
@@ -184,43 +186,59 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 
 	// capture all top-level decl names first before any emits, because func AST rewrites need them
 	for _, stmt := range js_ast.List {
-		switch it := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *js.VarDecl:
-			for _, item := range it.List {
+			for _, item := range stmt.List {
 				assert(item.Binding != nil)
 				name := jsString(item.Binding)
 				assert(name != "")
 				me.topLevelDecls[name] = item.Default
 			}
 		case *js.FuncDecl:
-			assert(it.Name != nil)
-			name := it.Name.String()
+			assert(stmt.Name != nil)
+			name := stmt.Name.String()
 			assert(name != "")
-			me.topLevelDecls[name] = it
+			me.topLevelDecls[name] = stmt
 		case *js.ImportStmt:
-			name, path := strings.Trim(string(it.Default), "\"'"), strings.Trim(string(it.Module), "\"'")
-			assert(name != "" && path != "" && len(it.List) == 0)
+			name, path := strings.Trim(string(stmt.Default), "\"'"), strings.Trim(string(stmt.Module), "\"'")
+			assert(name != "" && path != "" && len(stmt.List) == 0)
 			me.allImports[name] = path
+		case *js.LabelledStmt:
+			expr, _ := stmt.Value.(*js.ExprStmt)
+			var assignment *js.BinaryExpr
+			if expr != nil {
+				assignment, _ = expr.Value.(*js.BinaryExpr)
+			}
+			var assignee *js.Var
+			if assignment != nil {
+				assignee, _ = assignment.X.(*js.Var)
+			}
+			if assignment == nil || assignment.Op != js.EqToken || assignee == nil {
+				return errors.New(me.zuiFilePath + ": assignment expression expected following '$: ', instead of '" + jsString(stmt.Value) + "'")
+			}
+			name := string(assignee.Name())
+			assert(name != "")
+			me.topLevelReactiveDecls[stmt] = assignment.Y
 
-			// default:
-			// 	println(">>" + fmt.Sprintf("%T", it) + "<<")
+		default:
+			return errors.New(me.zuiFilePath + ": unexpected at top-level: '" + jsString(stmt) + "'")
 		}
 	}
 
 	pref := "\n  "
 	// now, emit the top-level decls, rewriting all func ASTs
 	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
-		switch it := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *js.FuncDecl:
-			name := it.Name.String()
-			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
+			name := stmt.Name.String()
+			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &stmt.Body); err != nil {
 				return err
 			}
-			src_fn := jsString(it)
+			src_fn := jsString(stmt)
 			assert(strings.HasPrefix(src_fn, "function "))
 			me.WriteString("\n\n" + src_fn[len("function "):] + "\n")
 		case *js.VarDecl:
-			for _, item := range it.List {
+			for _, item := range stmt.List {
 				name := jsString(item.Binding)
 				me.WriteString(pref + "#" + name)
 				if item.Default != nil {
@@ -247,6 +265,13 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				me.WriteString(pref + "  }")
 				me.WriteString(pref + "}")
 			}
+		case *js.LabelledStmt:
+			name, expr := jsAssigneeNameInLabelledStmt(stmt), me.topLevelReactiveDecls[stmt]
+			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &js.BlockStmt{List: []js.IStmt{&js.ExprStmt{Value: expr}}}); err != nil {
+				return err
+			}
+
+			me.WriteString(pref + "get " + name + "() { return " + jsString(expr) + " }")
 		}
 	}
 	return nil
