@@ -27,6 +27,10 @@ export class Nested extends HTMLElement {
     el1.append(el2);
     shadowRoot.appendChild(el1);
   }
+  static observedAttributes = ['answer'];
+  attributeChangedCallback(name, vOld, vNew) {
+    this[name] = vNew;
+  }
   constructor() {
     super();
   }

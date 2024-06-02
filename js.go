@@ -3,6 +3,7 @@ package zui
 import (
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/tdewolff/parse/v2/js"
@@ -71,7 +72,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 			me.allTopLevelRefs[name] = true
 			me.rewrites[node] = &js.DotExpr{
 				X: &js.Var{Data: []byte("this")},
-				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(ıf(me.state.allExports[name], name, "#"+name))},
+				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(ıf(slices.Contains(me.state.attrExports, name), name, "#"+name))},
 			}
 		}
 	case *js.ExprStmt:

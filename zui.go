@@ -32,8 +32,8 @@ type zui2js struct {
 	topLevelReactiveDecls map[*js.LabelledStmt]js.IExpr
 	topLevelReactiveDeps  map[string][]string
 	topLevelReactiveStmts map[string][]string
-	allImports            map[string]string
-	allExports            map[string]bool
+	imports               map[string]string
+	attrExports           []string
 	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
@@ -49,8 +49,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		topLevelReactiveDecls: map[*js.LabelledStmt]js.IExpr{},
 		topLevelReactiveDeps:  map[string][]string{},
 		topLevelReactiveStmts: map[string][]string{},
-		allImports:            map[string]string{},
-		allExports:            map[string]bool{},
+		imports:               map[string]string{},
 	}
 
 	src_htm, err := me.htmlFixupSelfClosingZuiTagsPriorToParsing()
@@ -137,6 +136,14 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		}
 	}
 	me.WriteString(newline + "  }")
+
+	if len(me.attrExports) > 0 {
+		me.WriteString(newline + "  static observedAttributes = ['" + strings.Join(me.attrExports, "', '") + "'];")
+		me.WriteString(newline + "  attributeChangedCallback(name, vOld, vNew) {")
+		me.WriteString(newline + "    this[name] = vNew;")
+		me.WriteString(newline + "  }")
+	}
+
 	me.WriteString(newline + "  constructor() {")
 	me.WriteString(newline + "    super();")
 	for _, name := range orderedMapKeys(me.topLevelReactiveDeps) {
@@ -150,6 +157,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		}
 	}
 	me.WriteString(newline + "  }")
+
 	if !me.usedSubs {
 		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
 	} else {
@@ -178,8 +186,8 @@ zuiOnPropChanged(name) {
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strQ("zui-"+strLo(zui_class_name)+"_"+zuiFileHash) + ";")
 	me.WriteString(newline + "}")
-	for _, zui_import_name := range orderedMapKeys(me.allImports) {
-		zui_import_path := me.allImports[zui_import_name]
+	for _, zui_import_name := range orderedMapKeys(me.imports) {
+		zui_import_path := me.imports[zui_import_name]
 		zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
 		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "'")
 	}
@@ -223,7 +231,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		case *js.ImportStmt:
 			name, path := strings.Trim(string(stmt.Default), "\"'"), strings.Trim(string(stmt.Module), "\"'")
 			assert(name != "" && path != "" && len(stmt.List) == 0)
-			me.allImports[name] = path
+			me.imports[name] = path
 		case *js.LabelledStmt:
 			expr, _ := stmt.Value.(*js.ExprStmt)
 			var assignment *js.BinaryExpr
@@ -269,9 +277,11 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 		case *js.VarDecl:
 			for _, item := range stmt.List {
 				name_orig := jsString(item.Binding)
-				me.allExports[name_orig] = is_exported
 				name_prop := ıf(is_exported, name_orig, "#"+name_orig)
 				name_var := "#v" + itoa(i)
+				if is_exported {
+					me.attrExports = append(me.attrExports, name_orig)
+				}
 				{
 					me.WriteString(pref + name_var)
 					if item.Default != nil {
@@ -363,7 +373,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 				if is_zui_tag {
 					zui_tag_name := htmlAttr(child_node, "zui-tag-name")
 					assert(zui_tag_name != "")
-					zui_rel_file_path := me.allImports[zui_tag_name]
+					zui_rel_file_path := me.imports[zui_tag_name]
 					if zui_rel_file_path == "" {
 						return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' was not `import`ed")
 					}
