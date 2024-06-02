@@ -272,7 +272,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				me.WriteByte(';')
 				me.WriteString(pref + "get " + name + "() { return this.#" + name + "; }")
 				me.WriteString(pref + "set " + name + "(v) {")
-				me.WriteString(pref + "  if (((typeof this.#" + name + ") == 'object') || ((typeof v) == 'object') || !Object.is(this.#" + name + ", v)) {")
+				me.WriteString(pref + "  if (((typeof this.#" + name + ") === 'object') || ((typeof v) === 'object') || !Object.is(this.#" + name + ", v)) {")
 				me.WriteString(pref + "    this.#" + name + " = v;")
 				me.WriteString(pref + "    this.zuiOnPropChanged('" + name + "');")
 				me.WriteString(pref + "  }")

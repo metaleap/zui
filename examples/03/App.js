@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   #src = '03/image.png';
   get src() { return this.#src; }
   set src(v) {
-    if (((typeof this.#src) == 'object') || ((typeof v) == 'object') || !Object.is(this.#src, v)) {
+    if (((typeof this.#src) === 'object') || ((typeof v) === 'object') || !Object.is(this.#src, v)) {
       this.#src = v;
       this.zuiOnPropChanged('src');
     }

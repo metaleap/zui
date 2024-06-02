@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   #numbers = [1, 2, 3, 4];
   get numbers() { return this.#numbers; }
   set numbers(v) {
-    if (((typeof this.#numbers) == 'object') || ((typeof v) == 'object') || !Object.is(this.#numbers, v)) {
+    if (((typeof this.#numbers) === 'object') || ((typeof v) === 'object') || !Object.is(this.#numbers, v)) {
       this.#numbers = v;
       this.zuiOnPropChanged('numbers');
     }

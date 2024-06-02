@@ -85,23 +85,6 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 		if is_assign {
 			if lhs := me.findLhsVar(bin_op.X); lhs != nil {
 				if name := string(lhs.Data); me.isTopLevel(name) {
-					// me.rewrites[bin_op] = &js.CallExpr{
-					// 	X: &js.DotExpr{
-					// 		X: &js.Var{Data: []byte("this")},
-					// 		Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte("zuiSetChanged")},
-					// 	},
-					// 	Args: js.Args{List: []js.Arg{
-					// 		{Value: &js.LiteralExpr{TokenType: js.StringToken, Data: []byte(strQ(name))}},
-					// 		{Value: &js.ArrowFunc{
-					// 			Body: js.BlockStmt{List: []js.IStmt{
-					// 				&js.ExprStmt{Value: &js.BinaryExpr{
-					// 					X: bin_op.X, Y: bin_op.Y, Op: bin_op.Op,
-					// 				}},
-					// 			}},
-					// 		}},
-					// 	}},
-					// }
-
 					me.rewrites[node] = &js.BlockStmt{List: []js.IStmt{
 						&js.ExprStmt{Value: &js.BinaryExpr{
 							X: bin_op.X, Y: bin_op.Y, Op: bin_op.Op,

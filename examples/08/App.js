@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   #count = 0;
   get count() { return this.#count; }
   set count(v) {
-    if (((typeof this.#count) == 'object') || ((typeof v) == 'object') || !Object.is(this.#count, v)) {
+    if (((typeof this.#count) === 'object') || ((typeof v) === 'object') || !Object.is(this.#count, v)) {
       this.#count = v;
       this.zuiOnPropChanged('count');
     }

@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   #string = `this string contains some <strong>HTML!!!</strong>`;
   get string() { return this.#string; }
   set string(v) {
-    if (((typeof this.#string) == 'object') || ((typeof v) == 'object') || !Object.is(this.#string, v)) {
+    if (((typeof this.#string) === 'object') || ((typeof v) === 'object') || !Object.is(this.#string, v)) {
       this.#string = v;
       this.zuiOnPropChanged('string');
     }
