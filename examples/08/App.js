@@ -54,6 +54,7 @@ increment() {
   }
   constructor() {
     super();
+    this.zuiSub('count', () => this.zuiOnPropChanged('doubled'));
   }
 #subs = new Map();
 zuiSub(name, fn) {

@@ -30,6 +30,7 @@ type zui2js struct {
 
 	topLevelDecls         map[string]js.IExpr
 	topLevelReactiveDecls map[*js.LabelledStmt]js.IExpr
+	topLevelReactiveDeps  map[string][]string
 	allImports            map[string]string
 	usedSubs              bool
 	idxFn                 int
@@ -44,6 +45,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		zuiFileSrcOrig:        zuiFileSrc,
 		topLevelDecls:         map[string]js.IExpr{},
 		topLevelReactiveDecls: map[*js.LabelledStmt]js.IExpr{},
+		topLevelReactiveDeps:  map[string][]string{},
 		allImports:            map[string]string{},
 	}
 
@@ -133,6 +135,11 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "  }")
 	me.WriteString(newline + "  constructor() {")
 	me.WriteString(newline + "    super();")
+	for _, name := range orderedMapKeys(me.topLevelReactiveDeps) {
+		for _, dep := range me.topLevelReactiveDeps[name] {
+			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => this.zuiOnPropChanged('" + name + "'));")
+		}
+	}
 	me.WriteString(newline + "  }")
 	if !me.usedSubs {
 		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
@@ -267,10 +274,10 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 			}
 		case *js.LabelledStmt:
 			name, expr := jsAssigneeNameInLabelledStmt(stmt), me.topLevelReactiveDecls[stmt]
-			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &js.BlockStmt{List: []js.IStmt{&js.ExprStmt{Value: expr}}}); err != nil {
+			me.topLevelReactiveDeps[name], err = jsWalkAndRewriteTopLevelFuncAST(me, name, &js.BlockStmt{List: []js.IStmt{&js.ExprStmt{Value: expr}}})
+			if err != nil {
 				return err
 			}
-
 			me.WriteString(pref + "get " + name + "() { return " + jsString(expr) + " }")
 		}
 	}

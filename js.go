@@ -76,8 +76,6 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(name)},
 			}
 		}
-	case *js.LabelledStmt:
-		// name := jsAssigneeNameInLabelledStmt(node)
 	}
 }
 
