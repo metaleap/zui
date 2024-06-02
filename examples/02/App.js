@@ -11,7 +11,7 @@ export class App extends HTMLElement {
   #greetName = "zui";
   get greetName() { return this.#greetName; }
   set greetName(v) {
-    if (this.#greetName !== v) {
+    if (((typeof this.#greetName) == 'object') || ((typeof v) == 'object') || !Object.is(this.#greetName, v)) {
       this.#greetName = v;
       this.zuiOnPropChanged('greetName');
     }

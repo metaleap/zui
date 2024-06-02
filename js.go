@@ -23,7 +23,7 @@ func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *j
 		state:           state,
 		funcName:        funcName,
 		gatherMode:      true,
-		rewrites:        map[js.IExpr]js.IExpr{},
+		rewrites:        map[js.INode]js.INode{},
 		allTopLevelRefs: map[string]bool{},
 	}
 	js.Walk(&me, funcBody)
@@ -40,7 +40,7 @@ type jsFuncASTRewriteWalker struct {
 	gatherMode bool
 
 	err             error
-	rewrites        map[js.IExpr]js.IExpr
+	rewrites        map[js.INode]js.INode
 	allTopLevelRefs map[string]bool
 }
 
@@ -74,6 +74,52 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(name)},
 			}
 		}
+	case *js.ExprStmt:
+		bin_op, _ := node.Value.(*js.BinaryExpr)
+		if bin_op == nil {
+			return
+		}
+
+		op := bin_op.Op.String()
+		is_assign := strings.Contains(op, "=") && !strings.Contains(op, "==") && (op != "!=") && (op != ">=") && (op != "<=")
+		if is_assign {
+			if lhs := me.findLhsVar(bin_op.X); lhs != nil {
+				if name := string(lhs.Data); me.isTopLevel(name) {
+					// me.rewrites[bin_op] = &js.CallExpr{
+					// 	X: &js.DotExpr{
+					// 		X: &js.Var{Data: []byte("this")},
+					// 		Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte("zuiSetChanged")},
+					// 	},
+					// 	Args: js.Args{List: []js.Arg{
+					// 		{Value: &js.LiteralExpr{TokenType: js.StringToken, Data: []byte(strQ(name))}},
+					// 		{Value: &js.ArrowFunc{
+					// 			Body: js.BlockStmt{List: []js.IStmt{
+					// 				&js.ExprStmt{Value: &js.BinaryExpr{
+					// 					X: bin_op.X, Y: bin_op.Y, Op: bin_op.Op,
+					// 				}},
+					// 			}},
+					// 		}},
+					// 	}},
+					// }
+
+					me.rewrites[node] = &js.BlockStmt{List: []js.IStmt{
+						&js.ExprStmt{Value: &js.BinaryExpr{
+							X: bin_op.X, Y: bin_op.Y, Op: bin_op.Op,
+						}},
+						&js.ExprStmt{Value: &js.CallExpr{
+							X: &js.DotExpr{
+								X: &js.Var{Data: []byte("this")},
+								Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte("zuiOnPropChanged")},
+							},
+							Args: js.Args{List: []js.Arg{
+								{Value: &js.LiteralExpr{TokenType: js.StringToken, Data: []byte(strQ(name))}},
+							}},
+						}},
+					}}
+
+				}
+			}
+		}
 	}
 }
 
@@ -90,21 +136,30 @@ func (me *jsFuncASTRewriteWalker) isTopLevel(name string) bool {
 	return is_top_level
 }
 
+func (me *jsFuncASTRewriteWalker) findLhsVar(lhs js.IExpr) *js.Var {
+	switch lhs := lhs.(type) {
+	case *js.Var:
+		return lhs
+	case *js.IndexExpr:
+		return me.findLhsVar(lhs.X)
+	case *js.DotExpr:
+		return me.findLhsVar(lhs.X)
+	}
+	return nil
+}
+
 func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {
 	jsRewrite(node, func(node js.INode) js.INode {
-		if expr, _ := node.(js.IExpr); me.err == nil && expr != nil {
-			return me.rewrites[expr]
-		}
-		return nil
+		return ıf(me.err == nil, me.rewrites[node], nil)
 	})
 }
 
 func jsWalkAndRewriteWholeAST(state *zui2js, ast *js.AST) error {
 	// for misc. other walk-and-rewrite needs not covered by `jsWalkAndRewriteTopLevelFuncAST`
 	me := jsWholeASTRewriter{
-		zuiFilePath: state.zuiFilePath,
-		gatherMode:  true,
-		rewrites:    map[js.INode]js.INode{},
+		state:      state,
+		gatherMode: true,
+		rewrites:   map[js.INode]js.INode{},
 	}
 	if js.Walk(&me, &ast.BlockStmt); me.err == nil {
 		me.gatherMode = false
@@ -114,8 +169,8 @@ func jsWalkAndRewriteWholeAST(state *zui2js, ast *js.AST) error {
 }
 
 type jsWholeASTRewriter struct {
-	zuiFilePath string
-	gatherMode  bool
+	state      *zui2js
+	gatherMode bool
 
 	err      error
 	rewrites map[js.INode]js.INode
@@ -140,7 +195,7 @@ func (me *jsWholeASTRewriter) gather(node js.INode) {
 			tail = strings.Trim(tail, "`")
 			switch string(tag.Data) {
 			case "zuiPath":
-				file_path_from_cur_dir_vantage := filepath.Join(filepath.Dir(me.zuiFilePath), tail)
+				file_path_from_cur_dir_vantage := filepath.Join(filepath.Dir(me.state.zuiFilePath), tail)
 				file_exists_from_zui_file_vantage := FsIsFile(file_path_from_cur_dir_vantage)
 				if file_exists_from_zui_file_vantage {
 					me.rewrites[node] = &js.LiteralExpr{
@@ -148,10 +203,11 @@ func (me *jsWholeASTRewriter) gather(node js.INode) {
 						Data:      []byte("'" + file_path_from_cur_dir_vantage + "'"),
 					}
 				} else {
-					me.err = errors.New(me.zuiFilePath + ": the zuiPath '" + tail + "' does not exist")
+					me.err = errors.New(me.state.zuiFilePath + ": the zuiPath '" + tail + "' does not exist")
 				}
 			}
 		}
+
 	}
 }
 

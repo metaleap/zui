@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 2p8izccyeozrmiwkrddfivgg32mfk6dhxzym21s3g77sjutqph71l4ru
+// Source file content hash: 2f2g5e8mtx7qz39o5xu6057e592czmk5ad3fgmk3uodv6jsx2uwv1s3fsal
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -11,14 +11,17 @@ export class App extends HTMLElement {
   #count = 0;
   get count() { return this.#count; }
   set count(v) {
-    if (this.#count !== v) {
+    if (((typeof this.#count) == 'object') || ((typeof v) == 'object') || !Object.is(this.#count, v)) {
       this.#count = v;
       this.zuiOnPropChanged('count');
     }
   }
 
 handleClick() {
-    this.count += 1;
+    {
+        this.count += 1;
+        this.zuiOnPropChanged("count");
+    }
 }
 
 
@@ -45,7 +48,10 @@ handleClick() {
     this.zuiSub('count', () => {
 if (this.count >= 10) {
     alert("count is dangerously high!");
-    this.count = 0;
+    {
+        this.count = 0;
+        this.zuiOnPropChanged("count");
+    }
 }
     });
     this.zuiSub('count', () => {
@@ -75,6 +81,6 @@ zuiOnPropChanged(name) {
 }
 
 
-  static ZuiTagName = "zui-app_2p8izccyeozrmiwkrddfivgg32mfk6dhxzym21s3g77sjutqph71l4ru";
+  static ZuiTagName = "zui-app_2f2g5e8mtx7qz39o5xu6057e592czmk5ad3fgmk3uodv6jsx2uwv1s3fsal";
 }
 customElements.define(App.ZuiTagName, App);
