@@ -40,7 +40,7 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs?.get(name)) ?? []))
+  for (const fn of ((this.#subs.get(name)) ?? []))
     fn();
 }
 

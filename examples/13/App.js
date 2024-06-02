@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6
+// Source file content hash: 2dieyvvhnhnk33cf2zu6w375ev3v1xfreqbacx0dnkbqhdmpyk413n9jsa
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -16,7 +16,6 @@ export class App extends HTMLElement {
       this.zuiOnPropChanged('count');
     }
   }
-  get #doubled() { return this.#count * 2 }
 
 #increment() {
     {
@@ -44,21 +43,13 @@ export class App extends HTMLElement {
     el1.append("\n");
     shadowRoot.appendChild(el1);
     shadowRoot.append("\n\n");
-    const el4 = document.createElement("p");
-    const fn4 = (function() { return this.#count; }).bind(this);
-    const el5 = document.createTextNode(fn4());
-    this.zuiSub('count', (() => { el5.nodeValue = fn4(); }).bind(this));
-    el4.append(el5);
-    el4.append(" doubled is ");
-    const fn5 = (function() { return this.#doubled; }).bind(this);
-    const el6 = document.createTextNode(fn5());
-    this.zuiSub('doubled', (() => { el6.nodeValue = fn5(); }).bind(this));
-    el4.append(el6);
-    shadowRoot.appendChild(el4);
+    const fn4 = (function() { return 0 > 1 ? "ouf" : "hallo <b>bold</b> text"; }).bind(this);
+    const el4 = document.createElement('span');
+    el4.innerHTML = fn4();
+    shadowRoot.append(el4);
   }
   constructor() {
     super();
-    this.zuiSub('count', () => this.zuiOnPropChanged('doubled'));
   }
 #subs = new Map();
 zuiSub(name, ...fn) {
@@ -74,6 +65,6 @@ zuiOnPropChanged(name) {
     fn();
 }
 
-  static ZuiTagName = "zui-app_1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6";
+  static ZuiTagName = "zui-app_2dieyvvhnhnk33cf2zu6w375ev3v1xfreqbacx0dnkbqhdmpyk413n9jsa";
 }
 customElements.define(App.ZuiTagName, App);

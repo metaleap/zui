@@ -2,12 +2,13 @@ package zui
 
 import (
 	"errors"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"golang.org/x/net/html"
 
-	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
 
@@ -151,7 +152,7 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		}
 		htmlText = htmlText[idx_close+1:]
 
-		js_ast, err := js.Parse(parse.NewInputString(src_js), js.Options{Inline: true})
+		js_ast, err := js.Parse(jsPreParse(src_js), js.Options{Inline: true})
 		if err != nil {
 			return nil, errors.New(me.zuiFilePath + ": " + err.Error() + " in JS expr '" + src_js + "'")
 		}
@@ -161,4 +162,36 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		}
 		ret = append(ret, htmlTextAndExprsSplitItem{expr: js_ast, exprAsHtml: is_html, exprTopLevelRefs: all_top_level_refs})
 	}
+}
+
+var (
+	angleBracketSentinelOpen     = "__zui_abo_" + strconv.FormatInt(time.Now().UnixNano(), 36)
+	angleBracketSentinelClose    = "__zui_abc_" + strconv.FormatInt(time.Now().UnixNano(), 36)
+	angleBracketSentinelReplDo   = strings.NewReplacer("<", angleBracketSentinelOpen, ">", angleBracketSentinelClose)
+	angleBracketSentinelReplUndo = strings.NewReplacer(angleBracketSentinelOpen, "<", angleBracketSentinelClose, ">")
+)
+
+func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
+	var buf strings.Builder
+	for {
+		idx_close := strings.IndexByte(src, '}')
+		if idx_close < 0 {
+			buf.WriteString(src)
+			break
+		}
+		idx_open := strings.LastIndexByte(src[:idx_close], '{')
+		if idx_open < 0 {
+			buf.WriteString(src)
+			break
+		}
+		buf.WriteString(src[:idx_open])
+		cur := src[idx_open : idx_close+1]
+		src = src[idx_close+1:]
+		buf.WriteString(angleBracketSentinelReplDo.Replace(cur))
+	}
+	return buf.String()
+}
+
+func htmlPreprocessAndRewriteBlocks(src string) string {
+	return src
 }

@@ -9,7 +9,6 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
-	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
 
@@ -57,6 +56,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	if err != nil {
 		return "", err
 	}
+	src_htm = htmlPreprocessAngledBracketsInCurlyBraces(src_htm)
 	htm_top_nodes, err := html.ParseFragment(
 		strings.NewReader(strings.TrimSpace(src_htm)),
 		&html.Node{
@@ -185,7 +185,7 @@ zuiOnPropChanged(name) {
 }
 
 func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
-	js_ast, err := js.Parse(parse.NewInputString(scriptNodeText), js.Options{})
+	js_ast, err := js.Parse(jsPreParse(scriptNodeText), js.Options{})
 	if err != nil {
 		return errors.New(me.zuiFilePath + ": " + err.Error())
 	}
@@ -412,8 +412,14 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							}
 						}
 						me.WriteString(attr_val_js_funcs)
-						switch {
-						default:
+						if strings.Contains(attr.Key, ":") {
+							if len(parts) != 1 || parts[0].expr == nil {
+								return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
+							}
+							if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
+								return err
+							}
+						} else {
 							fn_name_attr := next_fn()
 							if len(parts) == 1 && parts[0].expr != nil {
 								fn_name_attr = fn_name
@@ -431,12 +437,6 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 									me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
 								}
 							}
-						case strings.HasPrefix(attr.Key, "on:"):
-							if len(parts) != 1 || parts[0].expr == nil {
-								return errors.New(me.zuiFilePath + ": invalid attribute value in " + attr.Key + "='" + attr.Val + "'")
-							}
-							evt_name := strings.TrimSpace(attr.Key[len("on:"):])
-							me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "().bind(this)()).bind(this));")
 						}
 					}
 				}

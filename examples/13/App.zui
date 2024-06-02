@@ -1,0 +1,15 @@
+<!--https://learn.svelte.dev/tutorial/if-blocks-->
+<script>
+    let count = 0;
+
+    function increment() {
+        count += 1;
+    }
+</script>
+
+<button on:click={increment}>
+    Clicked {count}
+    {count === 1 ? "time" : "times"}
+</button>
+
+{@html 0 > 1 ? "ouf" : "hallo <b>bold</b> text"}
