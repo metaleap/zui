@@ -31,6 +31,7 @@ type zui2js struct {
 	topLevelDecls         map[string]js.IExpr
 	topLevelReactiveDecls map[*js.LabelledStmt]js.IExpr
 	topLevelReactiveDeps  map[string][]string
+	topLevelReactiveStmts map[string][]string
 	allImports            map[string]string
 	usedSubs              bool
 	idxFn                 int
@@ -46,6 +47,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		topLevelDecls:         map[string]js.IExpr{},
 		topLevelReactiveDecls: map[*js.LabelledStmt]js.IExpr{},
 		topLevelReactiveDeps:  map[string][]string{},
+		topLevelReactiveStmts: map[string][]string{},
 		allImports:            map[string]string{},
 	}
 
@@ -140,18 +142,23 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => this.zuiOnPropChanged('" + name + "'));")
 		}
 	}
+	for _, src_js := range orderedMapKeys(me.topLevelReactiveStmts) {
+		for _, dep := range me.topLevelReactiveStmts[src_js] {
+			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => {\n" + src_js + "\n    });")
+		}
+	}
 	me.WriteString(newline + "  }")
 	if !me.usedSubs {
 		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
 	} else {
 		me.WriteString(`
 #subs = new Map();
-zuiSub(name, fn) {
+zuiSub(name, ...fn) {
   let arr = this.#subs.get(name);
   if (!arr)
-    arr = [fn];
+    arr = fn;
   else
-    arr.push(fn);
+    arr.push(...fn);
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
@@ -217,15 +224,14 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				assignment, _ = expr.Value.(*js.BinaryExpr)
 			}
 			var assignee *js.Var
-			if assignment != nil {
+			if assignment != nil && assignment.Op == js.EqToken {
 				assignee, _ = assignment.X.(*js.Var)
 			}
-			if assignment == nil || assignment.Op != js.EqToken || assignee == nil {
-				return errors.New(me.zuiFilePath + ": assignment expression expected following '$: ', instead of '" + jsString(stmt.Value) + "'")
+			if assignee != nil {
+				name := string(assignee.Name())
+				assert(name != "")
+				me.topLevelReactiveDecls[stmt] = assignment.Y
 			}
-			name := string(assignee.Name())
-			assert(name != "")
-			me.topLevelReactiveDecls[stmt] = assignment.Y
 
 		default:
 			return errors.New(me.zuiFilePath + ": unexpected at top-level: '" + jsString(stmt) + "'")
@@ -273,12 +279,21 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				me.WriteString(pref + "}")
 			}
 		case *js.LabelledStmt:
-			name, expr := jsAssigneeNameInLabelledStmt(stmt), me.topLevelReactiveDecls[stmt]
-			me.topLevelReactiveDeps[name], err = jsWalkAndRewriteTopLevelFuncAST(me, name, &js.BlockStmt{List: []js.IStmt{&js.ExprStmt{Value: expr}}})
-			if err != nil {
-				return err
+			if expr := me.topLevelReactiveDecls[stmt]; expr != nil {
+				name := jsAssigneeNameInLabelledStmt(stmt)
+				me.topLevelReactiveDeps[name], err = jsWalkAndRewriteTopLevelFuncAST(me, name, &js.BlockStmt{List: []js.IStmt{&js.ExprStmt{Value: expr}}})
+				if err != nil {
+					return err
+				}
+				me.WriteString(pref + "get " + name + "() { return " + jsString(expr) + " }")
+			} else {
+				block := js.BlockStmt{List: []js.IStmt{stmt.Value}}
+				deps, err := jsWalkAndRewriteTopLevelFuncAST(me, "", &block)
+				if err != nil {
+					return err
+				}
+				me.topLevelReactiveStmts[jsString(block.List[0])] = deps
 			}
-			me.WriteString(pref + "get " + name + "() { return " + jsString(expr) + " }")
 		}
 	}
 	return nil

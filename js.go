@@ -60,7 +60,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 		for _, item := range node.List {
 			name := jsString(item.Binding)
 			if me.isTopLevel(name) {
-				if me.err = errors.New(me.state.zuiFilePath + ": top-level decl '" + name + "' shadowed in func '" + me.funcName + "'"); me.err != nil {
+				if me.err = errors.New(me.state.zuiFilePath + ": top-level decl '" + name + "' shadowed in '" + ıf(me.funcName != "", me.funcName, jsString(node)) + "'"); me.err != nil {
 					return
 				}
 			}

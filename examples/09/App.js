@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 31h8ys4i60kmd3o9tme4foa1se13invk5pebgv1133hctubzid61mdqi9p
+// Source file content hash: 2p8izccyeozrmiwkrddfivgg32mfk6dhxzym21s3g77sjutqph71l4ru
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -17,7 +17,7 @@ export class App extends HTMLElement {
     }
   }
 
-increment() {
+handleClick() {
     this.count += 1;
 }
 
@@ -25,7 +25,7 @@ increment() {
 
   zuiCreateHTMLElements(shadowRoot) {
     const el1 = document.createElement("button");
-    const fn1 = (function() { return this.increment; }).bind(this);
+    const fn1 = (function() { return this.handleClick; }).bind(this);
     el1.addEventListener('click', ((evt) => fn1().bind(this)()).bind(this));
     el1.append("\n    Clicked ");
     const fn2 = (function() { return this.count; }).bind(this);
@@ -42,6 +42,18 @@ increment() {
   }
   constructor() {
     super();
+    this.zuiSub('count', () => {
+if (this.count >= 10) {
+    alert("count is dangerously high!");
+    this.count = 0;
+}
+    });
+    this.zuiSub('count', () => {
+{
+    console.log(`the count is ${this.count}`);
+    console.log(`this will also be logged whenever count changes`);
+}
+    });
   }
 #subs = new Map();
 zuiSub(name, ...fn) {
@@ -63,6 +75,6 @@ zuiOnPropChanged(name) {
 }
 
 
-  static ZuiTagName = "zui-app_31h8ys4i60kmd3o9tme4foa1se13invk5pebgv1133hctubzid61mdqi9p";
+  static ZuiTagName = "zui-app_2p8izccyeozrmiwkrddfivgg32mfk6dhxzym21s3g77sjutqph71l4ru";
 }
 customElements.define(App.ZuiTagName, App);
