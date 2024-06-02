@@ -10,7 +10,12 @@ export class App extends HTMLElement {
 
   #v0 = '03/image.png';
   get #src() { return this.#v0; }
-  set #src(v) { this.zuiSet('#v0', 'src', v) }
+  set #src(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
+      this.zuiOnPropChanged('src');
+    }
+  }
 
 
   zuiCreateHTMLElements(shadowRoot) {
@@ -35,17 +40,9 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
+  for (const fn of ((this.#subs?.get(name)) ?? []))
     fn();
 }
-
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-
 
   static ZuiTagName = "zui-app_224abhbqzum0a1ljqpikvf8s3y2uqqiwf578t4s2b1paxznc07jc1eg08e2";
 }

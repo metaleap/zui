@@ -10,7 +10,12 @@ export class App extends HTMLElement {
 
   #v0 = [1, 2, 3, 4];
   get #numbers() { return this.#v0; }
-  set #numbers(v) { this.zuiSet('#v0', 'numbers', v) }
+  set #numbers(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
+      this.zuiOnPropChanged('numbers');
+    }
+  }
 
 #addNumber() {
     {
@@ -57,17 +62,9 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
+  for (const fn of ((this.#subs?.get(name)) ?? []))
     fn();
 }
-
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-
 
   static ZuiTagName = "zui-app_cpzhwfka6hux3hi56zlkxjq9q3ci30ihxlwr2lrj0fleyli1n21qtfmz1";
 }

@@ -10,7 +10,12 @@ export class App extends HTMLElement {
 
   #v0 = `this string contains some <strong>HTML!!!</strong>`;
   get #string() { return this.#v0; }
-  set #string(v) { this.zuiSet('#v0', 'string', v) }
+  set #string(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
+      this.zuiOnPropChanged('string');
+    }
+  }
 
 
   zuiCreateHTMLElements(shadowRoot) {
@@ -35,17 +40,9 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
+  for (const fn of ((this.#subs?.get(name)) ?? []))
     fn();
 }
-
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-
 
   static ZuiTagName = "zui-app_2es5dqpeyayji7j5kvo8cgwkr2ac8xud20q48z1uw8ompu8xbi8keucw5";
 }

@@ -18,14 +18,7 @@ export class App extends HTMLElement {
   constructor() {
     super();
   }
-zuiOnPropChanged(name) {}
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-
+  zuiOnPropChanged(name) {}
 
   static ZuiTagName = "zui-app_bz0x9g56pye3od150qsa8yum2ui1zu4834cyu2h42kb153smve1etljw4";
 }

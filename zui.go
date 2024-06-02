@@ -153,7 +153,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "  }")
 
 	if !me.usedSubs {
-		me.WriteString(newline + "zuiOnPropChanged(name) {}")
+		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
 	} else {
 		me.WriteString(`
 #subs = new Map();
@@ -166,19 +166,10 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
+  for (const fn of ((this.#subs?.get(name)) ?? []))
     fn();
-}
-`)
+}`)
 	}
-	me.WriteString(`
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-`)
 
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strQ("zui-"+strLo(zui_class_name)+"_"+zuiFileHash) + ";")
@@ -299,7 +290,12 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 					me.WriteByte(';')
 				}
 				me.WriteString(pref + "get " + name_prop + "() { return this." + name_var + "; }")
-				me.WriteString(pref + "set " + name_prop + "(v) { this.zuiSet('" + name_var + "', '" + name_orig + "', v) }")
+				me.WriteString(pref + "set " + name_prop + "(v) {")
+				me.WriteString(pref + "  if (((typeof this." + name_var + ") === 'object') || ((typeof v) === 'object') || !Object.is(this." + name_var + ", v)) {")
+				me.WriteString(pref + "    this." + name_var + " = v;")
+				me.WriteString(pref + "    this.zuiOnPropChanged('" + name_orig + "');")
+				me.WriteString(pref + "  }")
+				me.WriteString(pref + "}")
 			}
 		case *js.LabelledStmt:
 			if expr := me.topLevelReactiveDecls[stmt]; expr != nil {

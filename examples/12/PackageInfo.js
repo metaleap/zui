@@ -10,16 +10,36 @@ export class PackageInfo extends HTMLElement {
 
   #v0;
   get name() { return this.#v0; }
-  set name(v) { this.zuiSet('#v0', 'name', v) }
+  set name(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
+      this.zuiOnPropChanged('name');
+    }
+  }
   #v1;
   get version() { return this.#v1; }
-  set version(v) { this.zuiSet('#v1', 'version', v) }
+  set version(v) {
+    if (((typeof this.#v1) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v1, v)) {
+      this.#v1 = v;
+      this.zuiOnPropChanged('version');
+    }
+  }
   #v2;
   get speed() { return this.#v2; }
-  set speed(v) { this.zuiSet('#v2', 'speed', v) }
+  set speed(v) {
+    if (((typeof this.#v2) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v2, v)) {
+      this.#v2 = v;
+      this.zuiOnPropChanged('speed');
+    }
+  }
   #v3;
   get website() { return this.#v3; }
-  set website(v) { this.zuiSet('#v3', 'website', v) }
+  set website(v) {
+    if (((typeof this.#v3) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v3, v)) {
+      this.#v3 = v;
+      this.zuiOnPropChanged('website');
+    }
+  }
   get #href() { return `https://www.npmjs.com/package/${this.name}` }
 
 
@@ -77,17 +97,9 @@ zuiSub(name, ...fn) {
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
+  for (const fn of ((this.#subs?.get(name)) ?? []))
     fn();
 }
-
-zuiSet(k, n, v) {
-  if (((typeof this[k]) === 'object') || ((typeof v) === 'object') || !Object.is(this[k], v)) {
-    this[k] = v;
-    this.zuiOnPropChanged(n);
-  }
-}
-
 
   static ZuiTagName = "zui-packageinfo_1cfuhm90q79o6jzy12u2mhbl3m957duu8a02426fftr4nhwlw71yln13z";
 }
