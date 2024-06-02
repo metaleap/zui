@@ -57,6 +57,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		return "", err
 	}
 	src_htm = htmlPreprocessAngledBracketsInCurlyBraces(src_htm)
+	src_htm = htmlPreprocessAndRewriteBlocks(src_htm)
 	htm_top_nodes, err := html.ParseFragment(
 		strings.NewReader(strings.TrimSpace(src_htm)),
 		&html.Node{

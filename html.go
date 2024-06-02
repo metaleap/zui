@@ -191,7 +191,3 @@ func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
 	}
 	return buf.String()
 }
-
-func htmlPreprocessAndRewriteBlocks(src string) string {
-	return src
-}
