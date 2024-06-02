@@ -33,6 +33,7 @@ type zui2js struct {
 	topLevelReactiveDeps  map[string][]string
 	topLevelReactiveStmts map[string][]string
 	allImports            map[string]string
+	allExports            map[string]bool
 	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
@@ -49,6 +50,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		topLevelReactiveDeps:  map[string][]string{},
 		topLevelReactiveStmts: map[string][]string{},
 		allImports:            map[string]string{},
+		allExports:            map[string]bool{},
 	}
 
 	src_htm, err := me.htmlFixupSelfClosingZuiTagsPriorToParsing()
@@ -179,9 +181,6 @@ zuiOnPropChanged(name) {
 	for _, zui_import_name := range orderedMapKeys(me.allImports) {
 		zui_import_path := me.allImports[zui_import_name]
 		zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
-		if !FsIsFile(filepath.Join(filepath.Dir(me.zuiFilePath), zui_import_path)) {
-			return "", errors.New(me.zuiFilePath + ": imported '" + zui_import_name + "' from non-existing file '" + zui_import_path + "'")
-		}
 		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "'")
 	}
 	me.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
@@ -200,6 +199,14 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 
 	// capture all top-level decl names first before any emits, because func AST rewrites need them
 	for _, stmt := range js_ast.List {
+		if export, _ := stmt.(*js.ExportStmt); export != nil {
+			if decl, _ := export.Decl.(*js.VarDecl); decl != nil {
+				stmt = decl
+			} else if decl, _ := export.Decl.(*js.FuncDecl); decl != nil {
+				stmt = decl
+			}
+		}
+
 		switch stmt := stmt.(type) {
 		case *js.VarDecl:
 			for _, item := range stmt.List {
@@ -234,47 +241,61 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 			}
 
 		default:
-			return errors.New(me.zuiFilePath + ": unexpected at top-level: '" + jsString(stmt) + "'")
+			return errors.New(me.zuiFilePath + ": unexpected at top-level: '" + jsString(stmt))
 		}
 	}
 
 	pref := "\n  "
 	// now, emit the top-level decls, rewriting all func ASTs
-	for _, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
+	for i, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
+		is_exported := false
+		if export, _ := stmt.(*js.ExportStmt); export != nil {
+			if decl, _ := export.Decl.(*js.VarDecl); decl != nil {
+				stmt, is_exported = decl, true
+			} else if decl, _ := export.Decl.(*js.FuncDecl); decl != nil {
+				stmt, is_exported = decl, true
+			}
+		}
+
 		switch stmt := stmt.(type) {
 		case *js.FuncDecl:
-			name := stmt.Name.String()
-			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &stmt.Body); err != nil {
+			name_orig := stmt.Name.String()
+			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &stmt.Body); err != nil {
 				return err
 			}
 			src_fn := jsString(stmt)
 			assert(strings.HasPrefix(src_fn, "function "))
-			me.WriteString("\n\n" + src_fn[len("function "):] + "\n")
+			me.WriteString("\n\n" + ıf(is_exported, "", "#") + strings.TrimSpace(src_fn[len("function "):]) + "\n")
 		case *js.VarDecl:
 			for _, item := range stmt.List {
-				name := jsString(item.Binding)
-				me.WriteString(pref + "#" + name)
-				if item.Default != nil {
-					switch it := item.Default.(type) {
-					case *js.FuncDecl:
-						if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
-							return err
+				name_orig := jsString(item.Binding)
+				me.allExports[name_orig] = is_exported
+				name_prop := ıf(is_exported, name_orig, "#"+name_orig)
+				name_var := "#v" + itoa(i)
+				{
+					me.WriteString(pref + name_var)
+					if item.Default != nil {
+						switch it := item.Default.(type) {
+						case *js.FuncDecl:
+							if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &it.Body); err != nil {
+								return err
+							}
+							item.Default = it
+						case *js.ArrowFunc:
+							if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &it.Body); err != nil {
+								return err
+							}
+							item.Default = it
 						}
-						item.Default = it
-					case *js.ArrowFunc:
-						if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name, &it.Body); err != nil {
-							return err
-						}
-						item.Default = it
+						me.WriteString(" = " + jsString(item.Default))
 					}
-					me.WriteString(" = " + jsString(item.Default))
+					me.WriteByte(';')
 				}
-				me.WriteByte(';')
-				me.WriteString(pref + "get " + name + "() { return this.#" + name + "; }")
-				me.WriteString(pref + "set " + name + "(v) {")
-				me.WriteString(pref + "  if (((typeof this.#" + name + ") === 'object') || ((typeof v) === 'object') || !Object.is(this.#" + name + ", v)) {")
-				me.WriteString(pref + "    this.#" + name + " = v;")
-				me.WriteString(pref + "    this.zuiOnPropChanged('" + name + "');")
+				me.WriteString(pref + "get " + name_prop + "() { return this." + name_var + "; }")
+				me.WriteString(pref + "set " + name_prop + "(v) {")
+				me.WriteString(pref + "  if (((typeof this." + name_var + ") === 'object') || ((typeof v) === 'object') || !Object.is(this." + name_var + ", v)) {")
+				me.WriteString(pref + "    this." + name_var + " = v;")
+				me.WriteString(pref + "    this.zuiOnPropChanged('" + name_orig + "');")
 				me.WriteString(pref + "  }")
 				me.WriteString(pref + "}")
 			}
@@ -285,7 +306,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 				if err != nil {
 					return err
 				}
-				me.WriteString(pref + "get " + name + "() { return " + jsString(expr) + " }")
+				me.WriteString(pref + "get #" + name + "() { return " + jsString(expr) + " }")
 			} else {
 				block := js.BlockStmt{List: []js.IStmt{stmt.Value}}
 				deps, err := jsWalkAndRewriteTopLevelFuncAST(me, "", &block)
@@ -337,21 +358,25 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 				}
 			case html.ElementNode:
 				node_var_name := next_el()
+				is_zui_tag := child_node.Data == ("zui_" + me.zuiFileIdent)
 
-				if child_node.Data == ("zui_" + me.zuiFileIdent) {
+				if is_zui_tag {
 					zui_tag_name := htmlAttr(child_node, "zui-tag-name")
 					assert(zui_tag_name != "")
 					zui_rel_file_path := me.allImports[zui_tag_name]
 					if zui_rel_file_path == "" {
-						return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' not imported")
+						return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' was not `import`ed")
 					}
 					me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + zui_tag_name + ".ZuiTagName);")
-					me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
-					continue
+				} else {
+					me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(child_node.Data) + ");")
 				}
 
-				me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(child_node.Data) + ");")
 				for _, attr := range child_node.Attr {
+					if strings.HasPrefix(attr.Key, "zui-") {
+						continue
+					}
+
 					if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
 						attr.Val = attr.Key
 						attr.Key = strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:])
@@ -402,9 +427,11 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						me.WriteString(pref + node_var_name + ".addEventListener('" + evt_name + "', ((evt) => " + fn_name + "().bind(this)()).bind(this));")
 					}
 				}
+
 				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
 					return err
 				}
+
 				me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
 			}
 		}

@@ -1,31 +1,30 @@
-// Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 3710ixnn6ff0y1iw8u3kk26m701ynt2rrx2xogl5uy0s1aaypom1tbcehz
+// Code generated from Nested.zui. DO NOT EDIT
+// Source file content hash: 29790qf8l78qa1cbfzobvh5pkn1d6cd5kio3oum87h41okh6d4v1s6dvi8
 
-export class App extends HTMLElement {
+export class Nested extends HTMLElement {
   connectedCallback() {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.zuiCreateHTMLElements(shadowRoot);
   }
 
 
-  #v0 = "zui";
-  get #greetName() { return this.#v0; }
-  set #greetName(v) {
+  #v0;
+  get answer() { return this.#v0; }
+  set answer(v) {
     if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
       this.#v0 = v;
-      this.zuiOnPropChanged('greetName');
+      this.zuiOnPropChanged('answer');
     }
   }
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("h1");
-    el1.append("Hello ");
-    const fn1 = (function() { return this.#greetName.toUpperCase(); }).bind(this);
+    const el1 = document.createElement("p");
+    el1.append("The answer is ");
+    const fn1 = (function() { return this.answer; }).bind(this);
     const el2 = document.createTextNode(fn1());
-    this.zuiSub('greetName', (() => { el2.nodeValue = fn1(); }).bind(this));
+    this.zuiSub('answer', (() => { el2.nodeValue = fn1(); }).bind(this));
     el1.append(el2);
-    el1.append("!");
     shadowRoot.appendChild(el1);
   }
   constructor() {
@@ -51,6 +50,6 @@ zuiOnPropChanged(name) {
 }
 
 
-  static ZuiTagName = "zui-app_3710ixnn6ff0y1iw8u3kk26m701ynt2rrx2xogl5uy0s1aaypom1tbcehz";
+  static ZuiTagName = "zui-nested_29790qf8l78qa1cbfzobvh5pkn1d6cd5kio3oum87h41okh6d4v1s6dvi8";
 }
-customElements.define(App.ZuiTagName, App);
+customElements.define(Nested.ZuiTagName, Nested);

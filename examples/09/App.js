@@ -8,18 +8,18 @@ export class App extends HTMLElement {
   }
 
 
-  #count = 0;
-  get count() { return this.#count; }
-  set count(v) {
-    if (((typeof this.#count) === 'object') || ((typeof v) === 'object') || !Object.is(this.#count, v)) {
-      this.#count = v;
+  #v0 = 0;
+  get #count() { return this.#v0; }
+  set #count(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
       this.zuiOnPropChanged('count');
     }
   }
 
-handleClick() {
+#handleClick() {
     {
-        this.count += 1;
+        this.#count += 1;
         this.zuiOnPropChanged("count");
     }
 }
@@ -28,15 +28,15 @@ handleClick() {
 
   zuiCreateHTMLElements(shadowRoot) {
     const el1 = document.createElement("button");
-    const fn1 = (function() { return this.handleClick; }).bind(this);
+    const fn1 = (function() { return this.#handleClick; }).bind(this);
     el1.addEventListener('click', ((evt) => fn1().bind(this)()).bind(this));
     el1.append("\n    Clicked ");
-    const fn2 = (function() { return this.count; }).bind(this);
+    const fn2 = (function() { return this.#count; }).bind(this);
     const el2 = document.createTextNode(fn2());
     this.zuiSub('count', (() => { el2.nodeValue = fn2(); }).bind(this));
     el1.append(el2);
     el1.append("\n    ");
-    const fn3 = (function() { return this.count === 1 ? "time" : "times"; }).bind(this);
+    const fn3 = (function() { return this.#count === 1 ? "time" : "times"; }).bind(this);
     const el3 = document.createTextNode(fn3());
     this.zuiSub('count', (() => { el3.nodeValue = fn3(); }).bind(this));
     el1.append(el3);
@@ -46,17 +46,17 @@ handleClick() {
   constructor() {
     super();
     this.zuiSub('count', () => {
-if (this.count >= 10) {
+if (this.#count >= 10) {
     alert("count is dangerously high!");
     {
-        this.count = 0;
+        this.#count = 0;
         this.zuiOnPropChanged("count");
     }
 }
     });
     this.zuiSub('count', () => {
 {
-    console.log(`the count is ${this.count}`);
+    console.log(`the count is ${this.#count}`);
     console.log(`this will also be logged whenever count changes`);
 }
     });

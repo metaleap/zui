@@ -8,11 +8,11 @@ export class App extends HTMLElement {
   }
 
 
-  #src = '03/image.png';
-  get src() { return this.#src; }
-  set src(v) {
-    if (((typeof this.#src) === 'object') || ((typeof v) === 'object') || !Object.is(this.#src, v)) {
-      this.#src = v;
+  #v0 = '03/image.png';
+  get #src() { return this.#v0; }
+  set #src(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
       this.zuiOnPropChanged('src');
     }
   }
@@ -22,7 +22,7 @@ export class App extends HTMLElement {
     const el1 = document.createElement("img");
     const fn1 = () => "Rick";
     el1.setAttribute("alt",  fn1());
-    const fn2 = (function() { return this.src; }).bind(this);
+    const fn2 = (function() { return this.#src; }).bind(this);
     const fn3 = () =>  (fn2()) ;
     el1.setAttribute("src",  fn3());
     this.zuiSub('src', () => el1.setAttribute("src",  fn3()));

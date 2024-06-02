@@ -71,7 +71,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 			me.allTopLevelRefs[name] = true
 			me.rewrites[node] = &js.DotExpr{
 				X: &js.Var{Data: []byte("this")},
-				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(name)},
+				Y: js.LiteralExpr{TokenType: js.StringToken, Data: []byte(ıf(me.state.allExports[name], name, "#"+name))},
 			}
 		}
 	case *js.ExprStmt:

@@ -1,0 +1,6 @@
+<!--https://learn.svelte.dev/tutorial/declaring-props-->
+<script>
+    import Nested from "./Nested.zui";
+</script>
+
+<Nested answer={42} />

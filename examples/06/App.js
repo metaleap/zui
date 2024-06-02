@@ -8,11 +8,11 @@ export class App extends HTMLElement {
   }
 
 
-  #string = `this string contains some <strong>HTML!!!</strong>`;
-  get string() { return this.#string; }
-  set string(v) {
-    if (((typeof this.#string) === 'object') || ((typeof v) === 'object') || !Object.is(this.#string, v)) {
-      this.#string = v;
+  #v0 = `this string contains some <strong>HTML!!!</strong>`;
+  get #string() { return this.#v0; }
+  set #string(v) {
+    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+      this.#v0 = v;
       this.zuiOnPropChanged('string');
     }
   }
@@ -20,7 +20,7 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const el1 = document.createElement("p");
-    const fn1 = (function() { return this.string; }).bind(this);
+    const fn1 = (function() { return this.#string; }).bind(this);
     const el2 = document.createElement('span');
     el2.innerHTML = fn1();
     this.zuiSub('string', (() => { el2.innerHTML = fn1(); }).bind(this));
