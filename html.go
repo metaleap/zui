@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
 
@@ -119,10 +120,11 @@ func (me *zui2js) htmlTopLevelScriptElement(hayStack *html.Node, curScript *html
 }
 
 type htmlTextAndExprsSplitItem struct {
-	text             string
-	expr             js.INode
-	exprAsHtml       bool
-	exprTopLevelRefs []string
+	text           string
+	jsExpr         js.INode
+	jsExprAsHtml   bool
+	jsTopLevelRefs []string
+	jsBlockType    BlockType
 }
 
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
@@ -143,8 +145,8 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 			ret = append(ret, htmlTextAndExprsSplitItem{text: pre})
 		}
 		src_js := strings.TrimSpace(htmlText[:idx_close][idx_open+1:])
-		is_html := strings.HasPrefix(src_js, "@html ") || strings.HasPrefix(src_js, "@html\t") || strings.HasPrefix(src_js, "@html\r") || strings.HasPrefix(src_js, "@html\n")
-		if is_html {
+		ret_item := htmlTextAndExprsSplitItem{jsExprAsHtml: strings.HasPrefix(src_js, "@html ") || strings.HasPrefix(src_js, "@html\t") || strings.HasPrefix(src_js, "@html\r") || strings.HasPrefix(src_js, "@html\n") || strings.HasPrefix(src_js, "@html\v") || strings.HasPrefix(src_js, "@html\f") || strings.HasPrefix(src_js, "@html\b")}
+		if ret_item.jsExprAsHtml {
 			src_js = strings.TrimSpace(src_js[len("@html"):])
 		}
 		if src_js == "" {
@@ -152,15 +154,21 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		}
 		htmlText = htmlText[idx_close+1:]
 
-		js_ast, err := js.Parse(jsPreParse(src_js), js.Options{Inline: true})
-		if err != nil {
-			return nil, errors.New(me.zuiFilePath + ": " + err.Error() + " in JS expr '" + src_js + "'")
-		}
-		all_top_level_refs, err := jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt)
+		src_js = angleBracketSentinelReplUndo.Replace(src_js)
+		block_type, src_js, err := me.maybeBlockness(src_js)
 		if err != nil {
 			return nil, err
 		}
-		ret = append(ret, htmlTextAndExprsSplitItem{expr: js_ast, exprAsHtml: is_html, exprTopLevelRefs: all_top_level_refs})
+		js_ast, err := js.Parse(parse.NewInputString(src_js), js.Options{Inline: true})
+		if err != nil {
+			return nil, errors.New(me.zuiFilePath + ": " + err.Error() + " in '" + src_js + "'")
+		}
+		ret_item.jsTopLevelRefs, err = jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt)
+		if err != nil {
+			return nil, err
+		}
+		ret_item.jsExpr, ret_item.jsBlockType = js_ast, block_type
+		ret = append(ret, ret_item)
 	}
 }
 

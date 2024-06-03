@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
 
@@ -18,10 +17,6 @@ func jsString(node js.INode) string {
 
 func jsAssigneeNameInLabelledStmt(stmt *js.LabelledStmt) string {
 	return string(stmt.Value.(*js.ExprStmt).Value.(*js.BinaryExpr).X.(*js.Var).Name())
-}
-
-func jsPreParse(src string) *parse.Input {
-	return parse.NewInputString(angleBracketSentinelReplUndo.Replace(src))
 }
 
 func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) ([]string, error) {

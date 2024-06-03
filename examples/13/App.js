@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 2dieyvvhnhnk33cf2zu6w375ev3v1xfreqbacx0dnkbqhdmpyk413n9jsa
+// Source file content hash: 2ll5tuo70ow2o29smnprgteser3qjkwaqtio07l12evclx82m81t1r22uy1
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -43,10 +43,47 @@ export class App extends HTMLElement {
     el1.append("\n");
     shadowRoot.appendChild(el1);
     shadowRoot.append("\n\n");
-    const fn4 = (function() { return 0 > 1 ? "ouf" : "hallo <b>bold</b> text"; }).bind(this);
-    const el4 = document.createElement('span');
-    el4.innerHTML = fn4();
+    const fn4 = (function() { return this.#count > 10; }).bind(this);
+    const el4 = document.createTextNode(fn4());
+    this.zuiSub('count', (() => { el4.nodeValue = fn4(); }).bind(this));
     shadowRoot.append(el4);
+    shadowRoot.append("\n    ");
+    const el5 = document.createElement("p");
+    const fn5 = (function() { return this.#count; }).bind(this);
+    const el6 = document.createTextNode(fn5());
+    this.zuiSub('count', (() => { el6.nodeValue = fn5(); }).bind(this));
+    el5.append(el6);
+    el5.append(" is greater than 10");
+    shadowRoot.appendChild(el5);
+    shadowRoot.append("\n");
+    const fn6 = (function() { return this.#count < 5; }).bind(this);
+    const el7 = document.createTextNode(fn6());
+    this.zuiSub('count', (() => { el7.nodeValue = fn6(); }).bind(this));
+    shadowRoot.append(el7);
+    shadowRoot.append("\n    ");
+    const el8 = document.createElement("p");
+    const fn7 = (function() { return this.#count; }).bind(this);
+    const el9 = document.createTextNode(fn7());
+    this.zuiSub('count', (() => { el9.nodeValue = fn7(); }).bind(this));
+    el8.append(el9);
+    el8.append(" is less than 5");
+    shadowRoot.appendChild(el8);
+    shadowRoot.append("\n");
+    const fn8 = (function() { return ; }).bind(this);
+    const el10 = document.createTextNode(fn8());
+    shadowRoot.append(el10);
+    shadowRoot.append("\n    ");
+    const el11 = document.createElement("p");
+    const fn9 = (function() { return this.#count; }).bind(this);
+    const el12 = document.createTextNode(fn9());
+    this.zuiSub('count', (() => { el12.nodeValue = fn9(); }).bind(this));
+    el11.append(el12);
+    el11.append(" is between 5 and 10");
+    shadowRoot.appendChild(el11);
+    shadowRoot.append("\n");
+    const fn10 = (function() { return ; }).bind(this);
+    const el13 = document.createTextNode(fn10());
+    shadowRoot.append(el13);
   }
   constructor() {
     super();
@@ -65,6 +102,6 @@ zuiOnPropChanged(name) {
     fn();
 }
 
-  static ZuiTagName = "zui-app_2dieyvvhnhnk33cf2zu6w375ev3v1xfreqbacx0dnkbqhdmpyk413n9jsa";
+  static ZuiTagName = "zui-app_2ll5tuo70ow2o29smnprgteser3qjkwaqtio07l12evclx82m81t1r22uy1";
 }
 customElements.define(App.ZuiTagName, App);

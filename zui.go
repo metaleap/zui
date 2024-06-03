@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
+	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
 
@@ -57,7 +58,6 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		return "", err
 	}
 	src_htm = htmlPreprocessAngledBracketsInCurlyBraces(src_htm)
-	src_htm = htmlPreprocessAndRewriteBlocks(src_htm)
 	htm_top_nodes, err := html.ParseFragment(
 		strings.NewReader(strings.TrimSpace(src_htm)),
 		&html.Node{
@@ -119,14 +119,14 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
 		me.WriteString(newline + newline) // extra new lines because these emits are unindented
-		if err = me.walkScriptAndEmitJS(htm_script.FirstChild.Data); err != nil {
+		if err = me.htmlWalkScriptTagAndEmitJS(htm_script.FirstChild.Data); err != nil {
 			return "", err
 		}
 		me.WriteString(newline + newline)
 	}
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	if htm_body != nil {
-		if err = me.walkBodyAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
+		if err = me.htmlWalkBodyTagAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
@@ -185,8 +185,8 @@ zuiOnPropChanged(name) {
 	return me.String() + newline, err
 }
 
-func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
-	js_ast, err := js.Parse(jsPreParse(scriptNodeText), js.Options{})
+func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
+	js_ast, err := js.Parse(parse.NewInputString(angleBracketSentinelReplUndo.Replace(scriptNodeText)), js.Options{})
 	if err != nil {
 		return errors.New(me.zuiFilePath + ": " + err.Error())
 	}
@@ -319,7 +319,7 @@ func (me *zui2js) walkScriptAndEmitJS(scriptNodeText string) error {
 	return nil
 }
 
-func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNodeVarName string) error {
+func (me *zui2js) htmlWalkBodyTagAndEmitJS(level int, parentNode *html.Node, parentNodeVarName string) error {
 	next_fn := func() string { me.idxFn++; return "fn" + itoa(me.idxFn) }
 	next_el := func() string { me.idxEl++; return "el" + itoa(me.idxEl) }
 	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
@@ -338,18 +338,18 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 				for _, part := range parts {
 					if part.text != "" {
 						me.WriteString(pref + parentNodeVarName + ".append(" + strQ(part.text) + ");")
-					} else if part.expr != nil {
-						js_src := strings.TrimSuffix(jsString(part.expr), ";")
+					} else if part.jsExpr != nil {
+						js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 						fn_name, span_var_name := next_fn(), next_el()
 						me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
-						if part.exprAsHtml {
+						if part.jsExprAsHtml {
 							me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
 							me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
 						} else {
 							me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
 						}
-						for _, top_level_decl_name := range part.exprTopLevelRefs {
-							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.exprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
+						for _, top_level_decl_name := range part.jsTopLevelRefs {
+							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
 							me.usedSubs = true
 						}
 						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
@@ -398,12 +398,12 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						}
 						fn_name, attr_val_js_expr, attr_val_js_funcs := "", "", ""
 						for _, part := range parts {
-							if part.expr != nil {
+							if part.jsExpr != nil {
 								attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
-								if part.exprAsHtml {
+								if part.jsExprAsHtml {
 									return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
 								}
-								js_src := strings.TrimSuffix(jsString(part.expr), ";")
+								js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 								fn_name = next_fn()
 								attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
 								attr_val_js_expr += " (" + fn_name + "()) "
@@ -414,7 +414,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 						}
 						me.WriteString(attr_val_js_funcs)
 						if strings.Contains(attr.Key, ":") {
-							if len(parts) != 1 || parts[0].expr == nil {
+							if len(parts) != 1 || parts[0].jsExpr == nil {
 								return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
 							}
 							if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
@@ -422,7 +422,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							}
 						} else {
 							fn_name_attr := next_fn()
-							if len(parts) == 1 && parts[0].expr != nil {
+							if len(parts) == 1 && parts[0].jsExpr != nil {
 								fn_name_attr = fn_name
 							} else {
 								me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
@@ -430,7 +430,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 							me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
 							attr_decl_sub_done := map[string]bool{}
 							for _, part := range parts {
-								for _, top_level_decl_name := range part.exprTopLevelRefs {
+								for _, top_level_decl_name := range part.jsTopLevelRefs {
 									if attr_decl_sub_done[top_level_decl_name] {
 										continue
 									}
@@ -442,7 +442,7 @@ func (me *zui2js) walkBodyAndEmitJS(level int, parentNode *html.Node, parentNode
 					}
 				}
 
-				if err := me.walkBodyAndEmitJS(level+1, child_node, node_var_name); err != nil {
+				if err := me.htmlWalkBodyTagAndEmitJS(level+1, child_node, node_var_name); err != nil {
 					return err
 				}
 

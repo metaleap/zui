@@ -1,27 +1,38 @@
 package zui
 
 import (
+	"errors"
 	"strings"
 )
 
-func htmlPreprocessAndRewriteBlocks(src string) string {
-	var buf strings.Builder
-	for {
-		idx_close := strings.IndexByte(src, '}')
-		if idx_close < 0 {
-			buf.WriteString(src)
-			break
-		}
-		idx_open := strings.LastIndexByte(src[:idx_close], '{')
-		if idx_open < 0 {
-			buf.WriteString(src)
-			break
-		}
-		buf.WriteString(src[:idx_open])
-		cur := src[idx_open : idx_close+1]
-		src = src[idx_close+1:]
+type BlockType int
 
-		_ = cur
+const (
+	_ BlockType = iota
+	BlockIfStart
+	BlockIfElseIf
+	BlockIfElse
+	BlockIfEnd
+	BlockEachStart
+	BlockEachEnd
+	BlockAwaitStart
+	BlockAwaitThen
+	BlockAwaitCatch
+	BlockAwaitEnd
+)
+
+func (me *zui2js) maybeBlockness(src string) (BlockType, string, error) {
+	switch {
+	case !(strings.HasPrefix(src, "#") || strings.HasPrefix(src, ":") || strings.HasPrefix(src, "/")):
+		return 0, src, nil
+	case strings.HasPrefix(src, "#if "):
+		return BlockIfStart, src[len("#if "):], nil
+	case strings.HasPrefix(src, ":else if "):
+		return BlockIfElseIf, src[len(":else if "):], nil
+	case strings.TrimSpace(src) == ":else":
+		return BlockIfElse, "", nil
+	case strings.TrimSpace(src) == "/if":
+		return BlockIfEnd, "", nil
 	}
-	return src
+	return 0, "", errors.New(me.zuiFilePath + ": unrecognized block syntax in '" + src + "'")
 }
