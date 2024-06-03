@@ -44,7 +44,7 @@ export class App extends HTMLElement {
     shadowRoot.append(" ");
     const e6 = document.createElement("button");
     const f7 = (() => (this.#addNumber)).bind(this);
-    e6.addEventListener('click', ((evt) => f7().bind(this)()).bind(this));
+    e6.addEventListener('click', ((evt) => (f7)().bind(this)()).bind(this));
     e6.append(" Add a number ");
     shadowRoot.appendChild(e6);
   }

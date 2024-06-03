@@ -38,9 +38,9 @@ func (me *zui2js) blocknessCheck(src string) (BlockKind, string, error) {
 		return BlockIfStart, src[len("#if "):], nil
 	case strings.HasPrefix(src, ":else if "):
 		return BlockIfElseIf, src[len(":else if "):], nil
-	case strings.TrimSpace(src) == ":else":
+	case strTrim(src) == ":else":
 		return BlockIfElse, "", nil
-	case strings.TrimSpace(src) == "/if":
+	case strTrim(src) == "/if":
 		return BlockIfEnd, "", nil
 
 	case strings.HasPrefix(src, "#each "):
@@ -49,9 +49,13 @@ func (me *zui2js) blocknessCheck(src string) (BlockKind, string, error) {
 		if !ok {
 			return 0, "", errors.New(me.zuiFilePath + ": expected 'as' in `{" + src + "}`")
 		}
-		src_js = "const " + rhs + " of " + lhs
+		name, idx, _ := strings.Cut(rhs, ",")
+		if lhs, name, idx = strTrim(lhs), strTrim(name), strTrim(idx); lhs == "" || name == "" {
+			return 0, "", errors.New(me.zuiFilePath + ": expected identifiers around 'as' in `{" + src + "}`")
+		}
+		src_js = "[" + lhs + "," + name + "," + ıf(idx == "", "null", idx) + ",null]"
 		return BlockEachStart, src_js, nil
-	case strings.TrimSpace(src) == "/each":
+	case strTrim(src) == "/each":
 		return BlockEachEnd, "", nil
 	}
 	return 0, "", errors.New(me.zuiFilePath + ": unrecognized block syntax in `{" + src + "}`")
@@ -121,7 +125,10 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
 		me.WriteString(pref + "const " + it.fnName + " = (() => { //startLoop")
 		me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
-		me.WriteString(pref + "  for (" + jsSrc + ") {")
+		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
+		names := strings.Split(jsSrc[:len(jsSrc)-1][1:], ",")
+		assert(len(names) == 4)
+		me.WriteString(pref + "  for (const " + names[1] + " of " + names[0] + ") {")
 		me.blockFnStack = append(me.blockFnStack, &it)
 
 	case BlockEachEnd: // {/each}

@@ -154,10 +154,10 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if pre := htmlText[:idx_open]; pre != "" {
 			ret = append(ret, htmlTextAndExprsSplitItem{text: pre})
 		}
-		src_js := strings.TrimSpace(htmlText[:idx_close][idx_open+1:])
+		src_js := strTrim(htmlText[:idx_close][idx_open+1:])
 		ret_item := htmlTextAndExprsSplitItem{jsExprAsHtml: strings.HasPrefix(src_js, "@html ") || strings.HasPrefix(src_js, "@html\t") || strings.HasPrefix(src_js, "@html\r") || strings.HasPrefix(src_js, "@html\n") || strings.HasPrefix(src_js, "@html\v") || strings.HasPrefix(src_js, "@html\f") || strings.HasPrefix(src_js, "@html\b")}
 		if ret_item.jsExprAsHtml {
-			src_js = strings.TrimSpace(src_js[len("@html"):])
+			src_js = strTrim(src_js[len("@html"):])
 		}
 		if src_js == "" {
 			return nil, errors.New(me.zuiFilePath + ": expression expected inside the '{}' in '" + html_text_orig + "'")
@@ -187,9 +187,10 @@ var (
 	angleBracketSentinelClose    = "__zui_abc_" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	angleBracketSentinelReplDo   = strings.NewReplacer("<", angleBracketSentinelOpen, ">", angleBracketSentinelClose)
 	angleBracketSentinelReplUndo = strings.NewReplacer(angleBracketSentinelOpen, "<", angleBracketSentinelClose, ">")
+	replApos                     = strings.NewReplacer("'", "&apos;")
 )
 
-func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
+func htmlPreprocessTrickyCharsInCurlyBraces(src string) string {
 	var buf strings.Builder
 	for {
 		idx_close := strings.IndexByte(src, '}')
@@ -204,8 +205,12 @@ func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
 		}
 		buf.WriteString(src[:idx_open])
 		cur := src[idx_open : idx_close+1]
-		src = src[idx_close+1:]
+		if idx_open >= 5 && src[idx_open-1] == '=' && idx_close < (len(src)-1) &&
+			(src[idx_close+1] == '>' || htmlTextIsFullyWhitespace(src[idx_close+1:][:1])) {
+			cur = "'" + replApos.Replace(cur) + "'"
+		}
 		buf.WriteString(angleBracketSentinelReplDo.Replace(cur))
+		src = src[idx_close+1:]
 	}
 	return buf.String()
 }
@@ -230,7 +235,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + ");")
 
 		} else if part.jsExpr != nil {
-			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
+			js_src := strings.TrimSpace(strings.TrimSuffix(jsString(part.jsExpr), ";"))
 			if part.jsBlockKind != 0 {
 				if err = me.blockFragmentEmitJS(js_src, &part, parentNodeVarName); err != nil {
 					return err
@@ -282,8 +287,8 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 
 		spread := ""
 		if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
-			if attr_key := strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:]); strings.HasPrefix(attr_key, "...") {
-				spread = strings.TrimSpace(attr_key[len("..."):])
+			if attr_key := strTrim(attr.Key[:len(attr.Key)-1][1:]); strings.HasPrefix(attr_key, "...") {
+				spread = strTrim(attr_key[len("..."):])
 			} else {
 				attr.Val = attr.Key
 				attr.Key = attr_key
@@ -319,6 +324,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 			me.WriteString(attr_val_js_funcs)
 			if strings.Contains(attr.Key, ":") {
 				if len(parts) != 1 || parts[0].jsExpr == nil {
+					println(">>" + parts[0].text + "<<<")
 					return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
 				}
 				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {

@@ -59,9 +59,9 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	if err != nil {
 		return "", err
 	}
-	src_htm = htmlPreprocessAngledBracketsInCurlyBraces(src_htm)
+	src_htm = htmlPreprocessTrickyCharsInCurlyBraces(src_htm)
 	htm_top_nodes, err := html.ParseFragment(
-		strings.NewReader(strings.TrimSpace(src_htm)),
+		strings.NewReader(strTrim(src_htm)),
 		&html.Node{
 			Type:     html.ElementNode,
 			Data:     "html",
@@ -266,7 +266,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 			}
 			src_fn := jsString(stmt)
 			assert(strings.HasPrefix(src_fn, "function "))
-			me.WriteString("\n\n" + ıf(is_exported, "", "#") + strings.TrimSpace(src_fn[len("function "):]) + "\n")
+			me.WriteString("\n\n" + ıf(is_exported, "", "#") + strTrim(src_fn[len("function "):]) + "\n")
 		case *js.VarDecl:
 			for _, item := range stmt.List {
 				name_orig := jsString(item.Binding)

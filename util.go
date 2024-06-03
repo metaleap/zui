@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	itoa  = strconv.Itoa
-	strQ  = strconv.Quote
-	strLo = strings.ToLower
+	itoa    = strconv.Itoa
+	strQ    = strconv.Quote
+	strLo   = strings.ToLower
+	strTrim = strings.TrimSpace
 )
 
 func ıf[T any](b bool, t T, f T) T {
