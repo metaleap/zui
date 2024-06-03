@@ -14,10 +14,10 @@ export class App extends HTMLElement {
     const e1 = document.createElement("p");
     e1.append("This is a paragraph.");
     shadowRoot.appendChild(e1);
-    shadowRoot.append("\n");
+    shadowRoot.append(" ");
     const e2 = document.createElement(Nested.ZuiTagName);
     shadowRoot.appendChild(e2);
-    shadowRoot.append("\n\n");
+    shadowRoot.append(" ");
     const e3 = document.createElement("style");
     e3.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
     shadowRoot.appendChild(e3);

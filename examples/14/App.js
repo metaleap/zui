@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6
+// Source file content hash: 3hgnbazdz16xy1o0noca8oxalr38jd3t8w1xkzsd44kuo3kg1xa1dyj1cy
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -16,7 +16,6 @@ export class App extends HTMLElement {
       this.zuiOnPropChanged('count');
     }
   }
-  get #doubled() { return this.#count * 2 }
 
 #increment() {
     {
@@ -44,21 +43,35 @@ export class App extends HTMLElement {
     e1.append(" ");
     shadowRoot.appendChild(e1);
     shadowRoot.append(" ");
-    const e7 = document.createElement("p");
-    const f8 = f3;
-    const e9 = document.createTextNode(f8());
-    this.zuiSub('count', (() => { e9.nodeValue = f8(); }).bind(this));
-    e7.append(e9);
-    e7.append(" doubled is ");
-    const f10 = (function() { return this.#doubled; }).bind(this);
+    const e8 = document.createElement('span');
+    const f7 = (function() { // IF
+    e8.replaceChildren();
+      if (this.#count > 10) {
+    e8.append(" ");
+    const e9 = document.createElement("p");
+    const f10 = f3;
     const e11 = document.createTextNode(f10());
-    this.zuiSub('doubled', (() => { e11.nodeValue = f10(); }).bind(this));
-    e7.append(e11);
-    shadowRoot.appendChild(e7);
+    e9.append(e11);
+    e9.append(" is greater than 10");
+    e8.appendChild(e9);
+    e8.append(" ");
+      } else {
+    e8.append(" ");
+    const e12 = document.createElement("p");
+    const f13 = f3;
+    const e14 = document.createTextNode(f13());
+    e12.append(e14);
+    e12.append(" is between 0 and 10");
+    e8.appendChild(e12);
+    e8.append(" ");
+      }
+    }).bind(this); // FI
+    f7();
+    this.zuiSub("count", f7);
+    shadowRoot.appendChild(e8);
   }
   constructor() {
     super();
-    this.zuiSub('count', () => this.zuiOnPropChanged('doubled'));
   }
 #subs = new Map();
 zuiSub(name, fn) {
@@ -74,6 +87,6 @@ zuiOnPropChanged(name) {
     fn();
 }
 
-  static ZuiTagName = "zui-app_1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6";
+  static ZuiTagName = "zui-app_3hgnbazdz16xy1o0noca8oxalr38jd3t8w1xkzsd44kuo3kg1xa1dyj1cy";
 }
 customElements.define(App.ZuiTagName, App);

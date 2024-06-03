@@ -41,7 +41,7 @@ export class App extends HTMLElement {
     this.zuiSub('sum', (() => { e5.nodeValue = f4(); }).bind(this));
     e1.append(e5);
     shadowRoot.appendChild(e1);
-    shadowRoot.append("\n\n");
+    shadowRoot.append(" ");
     const e6 = document.createElement("button");
     const f7 = (function() { return this.#addNumber; }).bind(this);
     e6.addEventListener('click', ((evt) => f7().bind(this)()).bind(this));

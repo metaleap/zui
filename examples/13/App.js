@@ -35,26 +35,26 @@ export class App extends HTMLElement {
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     e1.append(e4);
-    e1.append("\n    ");
+    e1.append(" ");
     const f5 = (function() { return this.#count === 1 ? "time" : "times"; }).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     e1.append(e6);
-    e1.append("\n");
+    e1.append(" ");
     shadowRoot.appendChild(e1);
-    shadowRoot.append("\n\n");
+    shadowRoot.append(" ");
     const e8 = document.createElement('span');
     const f7 = (function() { // IF
     e8.replaceChildren();
       if (this.#count > 10) {
-    e8.append("\n    ");
+    e8.append(" ");
     const e9 = document.createElement("p");
-    const f10 = (function() { return this.#count; }).bind(this);
+    const f10 = f3;
     const e11 = document.createTextNode(f10());
     e9.append(e11);
     e9.append(" is greater than 10");
     e8.appendChild(e9);
-    e8.append("\n");
+    e8.append(" ");
       }
     }).bind(this); // FI
     f7();

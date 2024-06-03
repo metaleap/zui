@@ -15,6 +15,15 @@ func jsString(node js.INode) string {
 	return buf.String()
 }
 
+func (me *zui2js) jsFnCached(src string, varName string) string {
+	existing_var_name := me.jsFnNameCache[src]
+	if existing_var_name == "" {
+		me.jsFnNameCache[src] = varName
+		return src
+	}
+	return existing_var_name
+}
+
 func jsAssigneeNameInLabelledStmt(stmt *js.LabelledStmt) string {
 	return string(stmt.Value.(*js.ExprStmt).Value.(*js.BinaryExpr).X.(*js.Var).Name())
 }

@@ -38,6 +38,7 @@ type zui2js struct {
 	idxFn                 int
 	idxEl                 int
 	blockFnStack          []jsBlockFnStackItem
+	jsFnNameCache         map[string]string
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
@@ -51,6 +52,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 		topLevelReactiveDeps:  map[string][]string{},
 		topLevelReactiveStmts: map[string][]string{},
 		imports:               map[string]string{},
+		jsFnNameCache:         map[string]string{},
 	}
 
 	src_htm, err := me.htmlFixupSelfClosingZuiTagsPriorToParsing()

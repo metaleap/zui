@@ -53,6 +53,15 @@ func htmlAttr(node *html.Node, attrName string) string {
 	return ""
 }
 
+func htmlTextIsFullyWhitespace(s string) bool {
+	for _, r := range s {
+		if !unicode.IsSpace(r) {
+			return false
+		}
+	}
+	return true
+}
+
 func htmlReplaceNode(parentNode *html.Node, oldChildNode *html.Node, newChildNodes ...*html.Node) {
 	for i, new_child_node := range newChildNodes {
 		if i < len(newChildNodes)-1 {
@@ -218,11 +227,25 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 	for _, part := range parts {
 
 		if part.text != "" {
-			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(part.text) + ");")
+			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + ");")
 
 		} else if part.jsExpr != nil {
 			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
-			if part.jsBlockKind == BlockIfEnd {
+			if part.jsBlockKind == BlockIfStart {
+				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
+				*parentNodeVarName = me.nextElName()
+				it.nameSelfParent = *parentNodeVarName
+				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
+				me.WriteString(pref + "const " + it.fnName + " = (function() { // IF")
+				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
+				me.WriteString(pref + "  if (" + js_src + ") {")
+				me.blockFnStack = append(me.blockFnStack, it)
+			} else if part.jsBlockKind == BlockIfElse {
+				if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+					return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
+				}
+				me.WriteString(pref + "  } else {")
+			} else if part.jsBlockKind == BlockIfEnd {
 				if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
 					return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
 				}
@@ -239,18 +262,9 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 					}
 				}
 				me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
-			} else if part.jsBlockKind == BlockIfStart {
-				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
-				*parentNodeVarName = me.nextElName()
-				it.nameSelfParent = *parentNodeVarName
-				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
-				me.WriteString(pref + "const " + it.fnName + " = (function() { // IF")
-				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
-				me.WriteString(pref + "  if (" + js_src + ") {")
-				me.blockFnStack = append(me.blockFnStack, it)
 			} else {
 				fn_name, span_var_name := me.nextFnName(), me.nextElName()
-				me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+				me.WriteString(pref + "const " + fn_name + " = " + me.jsFnCached("(function() { return "+js_src+"; }).bind(this)", fn_name) + ";")
 				if part.jsExprAsHtml {
 					me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
 					me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
@@ -322,7 +336,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 					}
 					js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 					fn_name = me.nextFnName()
-					attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+					attr_val_js_funcs += (pref + "const " + fn_name + " = " + me.jsFnCached("(function() { return "+js_src+"; }).bind(this)", fn_name) + ";")
 					attr_val_js_expr += " (" + fn_name + "()) "
 				} else if part.text != "" {
 					attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
@@ -342,7 +356,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 				if len(parts) == 1 && parts[0].jsExpr != nil {
 					fn_name_attr = fn_name
 				} else {
-					me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
+					me.WriteString(pref + "const " + fn_name_attr + " = " + me.jsFnCached("(function() { return "+attr_val_js_expr+"; }).bind(this)", fn_name_attr) + ";")
 				}
 				me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
 				attr_decl_sub_done := map[string]bool{}

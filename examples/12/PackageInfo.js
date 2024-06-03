@@ -76,7 +76,7 @@ export class PackageInfo extends HTMLElement {
     this.zuiSub('website', () => e12.setAttribute("href",  f13()));
     e12.append("learn more here");
     e1.appendChild(e12);
-    e1.append("\n");
+    e1.append(" ");
     shadowRoot.appendChild(e1);
   }
   static observedAttributes = ['name', 'version', 'speed', 'website'];

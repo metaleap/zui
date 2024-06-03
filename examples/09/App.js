@@ -35,12 +35,12 @@ export class App extends HTMLElement {
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     e1.append(e4);
-    e1.append("\n    ");
+    e1.append(" ");
     const f5 = (function() { return this.#count === 1 ? "time" : "times"; }).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     e1.append(e6);
-    e1.append("\n");
+    e1.append(" ");
     shadowRoot.appendChild(e1);
   }
   constructor() {

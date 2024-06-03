@@ -20,7 +20,7 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("img");
-    const f2 = () => "Rick";
+    const f2 = (function() { return "Rick"; }).bind(this);
     e1.setAttribute("alt",  f2());
     const f3 = (function() { return this.#src; }).bind(this);
     e1.setAttribute("src",  f3());
