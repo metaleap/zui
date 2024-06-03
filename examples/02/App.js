@@ -21,7 +21,7 @@ export class App extends HTMLElement {
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("h1");
     e1.append("Hello ");
-    const f2 = (function() { return this.#greetName.toUpperCase(); }).bind(this);
+    const f2 = (() => (this.#greetName.toUpperCase())).bind(this);
     const e3 = document.createTextNode(f2());
     this.zuiSub('greetName', (() => { e3.nodeValue = f2(); }).bind(this));
     e1.append(e3);

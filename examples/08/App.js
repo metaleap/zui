@@ -29,15 +29,15 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("button");
-    const f2 = (function() { return this.#increment; }).bind(this);
+    const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => f2().bind(this)()).bind(this));
     e1.append("\n    Clicked ");
-    const f3 = (function() { return this.#count; }).bind(this);
+    const f3 = (() => (this.#count)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     e1.append(e4);
     e1.append(" ");
-    const f5 = (function() { return this.#count === 1 ? "time" : "times"; }).bind(this);
+    const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     e1.append(e6);
@@ -50,7 +50,7 @@ export class App extends HTMLElement {
     this.zuiSub('count', (() => { e9.nodeValue = f8(); }).bind(this));
     e7.append(e9);
     e7.append(" doubled is ");
-    const f10 = (function() { return this.#doubled; }).bind(this);
+    const f10 = (() => (this.#doubled)).bind(this);
     const e11 = document.createTextNode(f10());
     this.zuiSub('doubled', (() => { e11.nodeValue = f10(); }).bind(this));
     e7.append(e11);

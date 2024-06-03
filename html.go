@@ -236,7 +236,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				*parentNodeVarName = me.nextElName()
 				it.nameSelfParent = *parentNodeVarName
 				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
-				me.WriteString(pref + "const " + it.fnName + " = (function() { // IF")
+				me.WriteString(pref + "const " + it.fnName + " = (() => { // IF")
 				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 				me.WriteString(pref + "  if (" + js_src + ") {")
 				me.blockFnStack = append(me.blockFnStack, it)
@@ -264,7 +264,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
 			} else {
 				fn_name, span_var_name := me.nextFnName(), me.nextElName()
-				me.WriteString(pref + "const " + fn_name + " = " + me.jsFnCached("(function() { return "+js_src+"; }).bind(this)", fn_name) + ";")
+				me.WriteString(pref + "const " + fn_name + " = " + me.jsFnCached("(() => ("+js_src+")).bind(this)", fn_name) + ";")
 				if part.jsExprAsHtml {
 					me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
 					me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
@@ -336,7 +336,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 					}
 					js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 					fn_name = me.nextFnName()
-					attr_val_js_funcs += (pref + "const " + fn_name + " = " + me.jsFnCached("(function() { return "+js_src+"; }).bind(this)", fn_name) + ";")
+					attr_val_js_funcs += (pref + "const " + fn_name + " = " + me.jsFnCached("(() => ("+js_src+")).bind(this)", fn_name) + ";")
 					attr_val_js_expr += " (" + fn_name + "()) "
 				} else if part.text != "" {
 					attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
@@ -356,7 +356,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 				if len(parts) == 1 && parts[0].jsExpr != nil {
 					fn_name_attr = fn_name
 				} else {
-					me.WriteString(pref + "const " + fn_name_attr + " = " + me.jsFnCached("(function() { return "+attr_val_js_expr+"; }).bind(this)", fn_name_attr) + ";")
+					me.WriteString(pref + "const " + fn_name_attr + " = " + me.jsFnCached("(() => ("+attr_val_js_expr+")).bind(this)", fn_name_attr) + ";")
 				}
 				me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
 				attr_decl_sub_done := map[string]bool{}

@@ -28,15 +28,15 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("button");
-    const f2 = (function() { return this.#increment; }).bind(this);
+    const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => f2().bind(this)()).bind(this));
     e1.append("\n    Clicked ");
-    const f3 = (function() { return this.#count; }).bind(this);
+    const f3 = (() => (this.#count)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     e1.append(e4);
     e1.append(" ");
-    const f5 = (function() { return this.#count === 1 ? "time" : "times"; }).bind(this);
+    const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     e1.append(e6);
@@ -44,7 +44,7 @@ export class App extends HTMLElement {
     shadowRoot.appendChild(e1);
     shadowRoot.append(" ");
     const e8 = document.createElement('span');
-    const f7 = (function() { // IF
+    const f7 = (() => { // IF
     e8.replaceChildren();
       if (this.#count > 10) {
     e8.append(" ");

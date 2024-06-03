@@ -31,19 +31,19 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("p");
-    const f2 = (function() { return this.#numbers.join(" + "); }).bind(this);
+    const f2 = (() => (this.#numbers.join(" + "))).bind(this);
     const e3 = document.createTextNode(f2());
     this.zuiSub('numbers', (() => { e3.nodeValue = f2(); }).bind(this));
     e1.append(e3);
     e1.append(" = ");
-    const f4 = (function() { return this.#sum; }).bind(this);
+    const f4 = (() => (this.#sum)).bind(this);
     const e5 = document.createTextNode(f4());
     this.zuiSub('sum', (() => { e5.nodeValue = f4(); }).bind(this));
     e1.append(e5);
     shadowRoot.appendChild(e1);
     shadowRoot.append(" ");
     const e6 = document.createElement("button");
-    const f7 = (function() { return this.#addNumber; }).bind(this);
+    const f7 = (() => (this.#addNumber)).bind(this);
     e6.addEventListener('click', ((evt) => f7().bind(this)()).bind(this));
     e6.append(" Add a number ");
     shadowRoot.appendChild(e6);

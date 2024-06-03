@@ -20,7 +20,7 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("p");
-    const f2 = (function() { return this.#string; }).bind(this);
+    const f2 = (() => (this.#string)).bind(this);
     const e3 = document.createElement('span');
     e3.innerHTML = f2();
     this.zuiSub('string', (() => { e3.innerHTML = f2(); }).bind(this));

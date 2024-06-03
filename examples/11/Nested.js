@@ -21,7 +21,7 @@ export class Nested extends HTMLElement {
   zuiCreateHTMLElements(shadowRoot) {
     const e1 = document.createElement("p");
     e1.append("The answer is ");
-    const f2 = (function() { return this.answer; }).bind(this);
+    const f2 = (() => (this.answer)).bind(this);
     const e3 = document.createTextNode(f2());
     this.zuiSub('answer', (() => { e3.nodeValue = f2(); }).bind(this));
     e1.append(e3);
