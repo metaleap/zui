@@ -37,7 +37,7 @@ type zui2js struct {
 	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
-	blockFnStackIf        []jsBlockFnStackItem
+	blockFnStack          []jsBlockFnStackItem
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
@@ -144,11 +144,13 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	for _, name := range orderedMapKeys(me.topLevelReactiveDeps) {
 		for _, dep := range me.topLevelReactiveDeps[name] {
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => this.zuiOnPropChanged('" + name + "'));")
+			me.usedSubs = true
 		}
 	}
 	for _, src_js := range orderedMapKeys(me.topLevelReactiveStmts) {
 		for _, dep := range me.topLevelReactiveStmts[src_js] {
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => {\n" + src_js + "\n    });")
+			me.usedSubs = true
 		}
 	}
 	me.WriteString(newline + "  }")

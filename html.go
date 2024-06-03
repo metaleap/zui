@@ -221,22 +221,25 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(part.text) + ");")
 
 		} else if part.jsExpr != nil {
+			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 			if part.jsBlockKind == BlockIfEnd {
-				it := me.blockFnStackIf[len(me.blockFnStackIf)-1]
+				if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+					return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
+				}
+				it := me.blockFnStack[len(me.blockFnStack)-1]
 				*parentNodeVarName = it.namePrevParent
-				me.blockFnStackIf = me.blockFnStackIf[:len(me.blockFnStackIf)-1]
+				me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
 				me.WriteString(pref + "  }")
-				me.WriteString(pref + "}).bind(this); // IF")
+				me.WriteString(pref + "}).bind(this); // FI")
 				me.WriteString(pref + it.fnName + "();")
 				for _, dep := range it.deps {
-					me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
+					if !me.doesBlockFnStackHaveDep(dep) {
+						me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
+						me.usedSubs = true
+					}
 				}
 				me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
-				continue
-			}
-
-			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
-			if part.jsBlockKind == BlockIfStart {
+			} else if part.jsBlockKind == BlockIfStart {
 				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 				*parentNodeVarName = me.nextElName()
 				it.nameSelfParent = *parentNodeVarName
@@ -244,7 +247,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				me.WriteString(pref + "const " + it.fnName + " = (function() { // IF")
 				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 				me.WriteString(pref + "  if (" + js_src + ") {")
-				me.blockFnStackIf = append(me.blockFnStackIf, it)
+				me.blockFnStack = append(me.blockFnStack, it)
 			} else {
 				fn_name, span_var_name := me.nextFnName(), me.nextElName()
 				me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
@@ -255,8 +258,10 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 					me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
 				}
 				for _, top_level_decl_name := range part.jsTopLevelRefs {
-					me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
-					me.usedSubs = true
+					if !me.doesBlockFnStackHaveDep(top_level_decl_name) {
+						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
+						me.usedSubs = true
+					}
 				}
 				me.WriteString(pref + *parentNodeVarName + ".append(" + span_var_name + ");")
 			}
@@ -341,13 +346,17 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 				}
 				me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
 				attr_decl_sub_done := map[string]bool{}
+				for _, it := range me.blockFnStack {
+					for _, dep := range it.deps {
+						attr_decl_sub_done[dep] = true
+					}
+				}
 				for _, part := range parts {
 					for _, top_level_decl_name := range part.jsTopLevelRefs {
-						if attr_decl_sub_done[top_level_decl_name] {
-							continue
+						if !attr_decl_sub_done[top_level_decl_name] {
+							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
+							me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
 						}
-						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
-						me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
 					}
 				}
 			}

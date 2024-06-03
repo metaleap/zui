@@ -51,13 +51,12 @@ export class App extends HTMLElement {
     const e9 = document.createElement("p");
     const f10 = (function() { return this.#count; }).bind(this);
     const e11 = document.createTextNode(f10());
-    this.zuiSub('count', (() => { e11.nodeValue = f10(); }).bind(this));
     e9.append(e11);
     e9.append(" is greater than 10");
     e8.appendChild(e9);
     e8.append("\n");
       }
-    }).bind(this); // IF
+    }).bind(this); // FI
     f7();
     this.zuiSub("count", f7);
     shadowRoot.appendChild(e8);

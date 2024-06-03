@@ -2,6 +2,7 @@ package zui
 
 import (
 	"errors"
+	"slices"
 	"strings"
 )
 
@@ -43,4 +44,10 @@ func (me *zui2js) maybeBlockness(src string) (BlockKind, string, error) {
 		return BlockIfEnd, "//", nil
 	}
 	return 0, "", errors.New(me.zuiFilePath + ": unrecognized block syntax in '" + src + "'")
+}
+
+func (me *zui2js) doesBlockFnStackHaveDep(dep string) bool {
+	return slices.ContainsFunc(me.blockFnStack, func(it jsBlockFnStackItem) bool {
+		return slices.Contains(it.deps, dep)
+	})
 }
