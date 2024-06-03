@@ -3,7 +3,6 @@ package zui
 import (
 	"errors"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -126,7 +125,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	}
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	if htm_body != nil {
-		if err = me.htmlWalkBodyTagAndEmitJS(0, htm_body, "shadowRoot"); err != nil {
+		if err = me.htmlWalkBodyTagAndEmitJS(htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
@@ -319,134 +318,16 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 	return nil
 }
 
-func (me *zui2js) htmlWalkBodyTagAndEmitJS(level int, parentNode *html.Node, parentNodeVarName string) error {
-	next_fn := func() string { me.idxFn++; return "fn" + itoa(me.idxFn) }
-	next_el := func() string { me.idxEl++; return "el" + itoa(me.idxEl) }
-	if pref := "\n    "; parentNode.Type == html.ElementNode && parentNode.FirstChild != nil {
-		for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
-			switch child_node.Type {
-			case html.TextNode:
-				if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
-					me.WriteString(pref + parentNodeVarName + ".append(" + strQ(child_node.Data) + ");")
-					continue
-				}
-
-				parts, err := me.htmlSplitTextAndJSExprs(child_node.Data)
-				if err != nil {
-					return err
-				}
-				for _, part := range parts {
-					if part.text != "" {
-						me.WriteString(pref + parentNodeVarName + ".append(" + strQ(part.text) + ");")
-					} else if part.jsExpr != nil {
-						js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
-						fn_name, span_var_name := next_fn(), next_el()
-						me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
-						if part.jsExprAsHtml {
-							me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
-							me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
-						} else {
-							me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
-						}
-						for _, top_level_decl_name := range part.jsTopLevelRefs {
-							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
-							me.usedSubs = true
-						}
-						me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
-					}
-				}
-			case html.ElementNode:
-				node_var_name := next_el()
-				is_zui_tag := child_node.Data == ("zui_" + me.zuiFileIdent)
-
-				if is_zui_tag {
-					zui_tag_name := htmlAttr(child_node, "zui-tag-name")
-					assert(zui_tag_name != "")
-					zui_rel_file_path := me.imports[zui_tag_name]
-					if zui_rel_file_path == "" {
-						return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' was not `import`ed")
-					}
-					me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + zui_tag_name + ".ZuiTagName);")
-				} else {
-					me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(child_node.Data) + ");")
-				}
-
-				for _, attr := range child_node.Attr {
-					if strings.HasPrefix(attr.Key, "zui-") {
-						continue
-					}
-
-					spread := ""
-					if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
-						if attr_key := strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:]); strings.HasPrefix(attr_key, "...") {
-							spread = strings.TrimSpace(attr_key[len("..."):])
-						} else {
-							attr.Val = attr.Key
-							attr.Key = attr_key
-						}
-					}
-
-					if spread != "" {
-						ref := "this." + ıf(slices.Contains(me.attrExports, spread), "", "#") + spread
-						me.WriteString(pref + "for (const prop in " + ref + ") {")
-						me.WriteString(pref + "  " + node_var_name + ".setAttribute(prop, " + ref + "[prop]);")
-						me.WriteString(pref + "}")
-					} else {
-						parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
-						if err != nil {
-							return err
-						}
-						fn_name, attr_val_js_expr, attr_val_js_funcs := "", "", ""
-						for _, part := range parts {
-							if part.jsExpr != nil {
-								attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
-								if part.jsExprAsHtml {
-									return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
-								}
-								js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
-								fn_name = next_fn()
-								attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
-								attr_val_js_expr += " (" + fn_name + "()) "
-							} else if part.text != "" {
-								attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
-								attr_val_js_expr += strQ(part.text)
-							}
-						}
-						me.WriteString(attr_val_js_funcs)
-						if strings.Contains(attr.Key, ":") {
-							if len(parts) != 1 || parts[0].jsExpr == nil {
-								return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
-							}
-							if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
-								return err
-							}
-						} else {
-							fn_name_attr := next_fn()
-							if len(parts) == 1 && parts[0].jsExpr != nil {
-								fn_name_attr = fn_name
-							} else {
-								me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
-							}
-							me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
-							attr_decl_sub_done := map[string]bool{}
-							for _, part := range parts {
-								for _, top_level_decl_name := range part.jsTopLevelRefs {
-									if attr_decl_sub_done[top_level_decl_name] {
-										continue
-									}
-									me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
-									me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
-								}
-							}
-						}
-					}
-				}
-
-				if err := me.htmlWalkBodyTagAndEmitJS(level+1, child_node, node_var_name); err != nil {
-					return err
-				}
-
-				me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+func (me *zui2js) htmlWalkBodyTagAndEmitJS(parentNode *html.Node, parentNodeVarName string) error {
+	for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
+		switch child_node.Type {
+		case html.TextNode:
+			if err := me.htmlWalkTextNodeAndEmitJS(child_node, parentNode, parentNodeVarName); err != nil {
+				return err
+			}
+		case html.ElementNode:
+			if err := me.htmlWalkElemNodeAndEmitJS(child_node, parentNodeVarName); err != nil {
+				return err
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package zui
 
 import (
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -198,4 +199,137 @@ func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
 		buf.WriteString(angleBracketSentinelReplDo.Replace(cur))
 	}
 	return buf.String()
+}
+
+func (me *zui2js) nextFnName() string { me.idxFn++; return "f" + itoa(me.idxFn) }
+func (me *zui2js) nextElName() string { me.idxFn++; return "e" + itoa(me.idxFn) }
+
+func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName string) error {
+	const pref = "\n    "
+	if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
+		me.WriteString(pref + parentNodeVarName + ".append(" + strQ(curNode.Data) + ");")
+		return nil
+	}
+
+	parts, err := me.htmlSplitTextAndJSExprs(curNode.Data)
+	if err != nil {
+		return err
+	}
+	for _, part := range parts {
+		if part.text != "" {
+			me.WriteString(pref + parentNodeVarName + ".append(" + strQ(part.text) + ");")
+		} else if part.jsExpr != nil {
+			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
+			fn_name, span_var_name := me.nextFnName(), me.nextElName()
+			me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+			if part.jsExprAsHtml {
+				me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
+				me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
+			} else {
+				me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
+			}
+			for _, top_level_decl_name := range part.jsTopLevelRefs {
+				me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
+				me.usedSubs = true
+			}
+			me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
+		}
+	}
+	return nil
+}
+
+func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarName string) error {
+	const pref = "\n    "
+	node_var_name := me.nextElName()
+	is_zui_tag := curNode.Data == ("zui_" + me.zuiFileIdent)
+
+	if is_zui_tag {
+		zui_tag_name := htmlAttr(curNode, "zui-tag-name")
+		assert(zui_tag_name != "")
+		zui_rel_file_path := me.imports[zui_tag_name]
+		if zui_rel_file_path == "" {
+			return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' was not `import`ed")
+		}
+		me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + zui_tag_name + ".ZuiTagName);")
+	} else {
+		me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(curNode.Data) + ");")
+	}
+
+	for _, attr := range curNode.Attr {
+		if strings.HasPrefix(attr.Key, "zui-") {
+			continue
+		}
+
+		spread := ""
+		if attr.Val == "" && strings.HasPrefix(attr.Key, "{") && strings.HasSuffix(attr.Key, "}") {
+			if attr_key := strings.TrimSpace(attr.Key[:len(attr.Key)-1][1:]); strings.HasPrefix(attr_key, "...") {
+				spread = strings.TrimSpace(attr_key[len("..."):])
+			} else {
+				attr.Val = attr.Key
+				attr.Key = attr_key
+			}
+		}
+
+		if spread != "" {
+			ref := "this." + ıf(slices.Contains(me.attrExports, spread), "", "#") + spread
+			me.WriteString(pref + "for (const prop in " + ref + ") {")
+			me.WriteString(pref + "  " + node_var_name + ".setAttribute(prop, " + ref + "[prop]);")
+			me.WriteString(pref + "}")
+		} else {
+			parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
+			if err != nil {
+				return err
+			}
+			fn_name, attr_val_js_expr, attr_val_js_funcs := "", "", ""
+			for _, part := range parts {
+				if part.jsExpr != nil {
+					attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
+					if part.jsExprAsHtml {
+						return errors.New(me.zuiFilePath + ": the '@html' special tag is not permitted in any attributes, including '" + attr.Key + "'")
+					}
+					js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
+					fn_name = me.nextFnName()
+					attr_val_js_funcs += (pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+					attr_val_js_expr += " (" + fn_name + "()) "
+				} else if part.text != "" {
+					attr_val_js_expr += ıf(attr_val_js_expr != "", " + ", "")
+					attr_val_js_expr += strQ(part.text)
+				}
+			}
+			me.WriteString(attr_val_js_funcs)
+			if strings.Contains(attr.Key, ":") {
+				if len(parts) != 1 || parts[0].jsExpr == nil {
+					return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
+				}
+				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
+					return err
+				}
+			} else {
+				fn_name_attr := me.nextFnName()
+				if len(parts) == 1 && parts[0].jsExpr != nil {
+					fn_name_attr = fn_name
+				} else {
+					me.WriteString(pref + "const " + fn_name_attr + " = () => " + attr_val_js_expr + ";")
+				}
+				me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
+				attr_decl_sub_done := map[string]bool{}
+				for _, part := range parts {
+					for _, top_level_decl_name := range part.jsTopLevelRefs {
+						if attr_decl_sub_done[top_level_decl_name] {
+							continue
+						}
+						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
+						me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
+					}
+				}
+			}
+		}
+	}
+
+	if err := me.htmlWalkBodyTagAndEmitJS(curNode, node_var_name); err != nil {
+		return err
+	}
+
+	me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+	return nil
 }
