@@ -44,7 +44,7 @@ export class App extends HTMLElement {
     shadowRoot.appendChild(e1);
     shadowRoot.append(" ");
     const e8 = document.createElement('span');
-    const f7 = (() => { //IF
+    const f7 = (() => { //startCond
     e8.replaceChildren();
       if (this.#count > 10) {
     e8.append(" ");
@@ -65,7 +65,7 @@ export class App extends HTMLElement {
     e8.appendChild(e12);
     e8.append(" ");
       }
-    }).bind(this); //FI
+    }).bind(this); //endCond
     f7();
     this.zuiSub("count", f7);
     shadowRoot.appendChild(e8);
