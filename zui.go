@@ -280,27 +280,9 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 				{
 					me.WriteString(pref + name_var)
 					if item.Default != nil {
-						// switch it := item.Default.(type) {
-						// case *js.FuncDecl:
-						// 	if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &it.Body); err != nil {
-						// 		return err
-						// 	}
-						// 	item.Default = it
-						// case *js.ArrowFunc:
-						// 	if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &it.Body); err != nil {
-						// 		return err
-						// 	}
-						// 	item.Default = it
-						// default:
-						// 	if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, it); err != nil {
-						// 		return err
-						// 	}
-						// 	item.Default = it
-						// }
 						if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, item.Default); err != nil {
 							return err
 						}
-
 						me.WriteString(" = " + jsString(item.Default))
 					}
 					me.WriteByte(';')
