@@ -33,13 +33,13 @@
         border-radius: 50%;
         background: var(--color, #fff);
         transform: translate(-2px, -2px);
-        filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+        filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.5));
         transition: all 0.1s;
     }
 
     button[aria-current="true"] {
         transform: none;
         filter: none;
-        box-shadow: inset 3px 3px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: inset 3px 3px 4px rgba(0, 0, 0, 0.5);
     }
 </style>

@@ -27,21 +27,25 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("button");
+    const n_e1 = [];
     const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
-    e1.append("\n    Clicked ");
+    n_e1.push("\n    Clicked ");
     const f3 = (() => (this.#count)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
-    e1.append(e4);
-    e1.append(" ");
+    n_e1.push(e4);
+    n_e1.push(" ");
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
-    e1.append(e6);
-    e1.append(" ");
-    shadowRoot.appendChild(e1);
+    n_e1.push(e6);
+    n_e1.push(" ");
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

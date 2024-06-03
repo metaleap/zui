@@ -28,33 +28,39 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("button");
+    const n_e1 = [];
     const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
-    e1.append("\n    Clicked ");
+    n_e1.push("\n    Clicked ");
     const f3 = (() => (this.#count)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
-    e1.append(e4);
-    e1.append(" ");
+    n_e1.push(e4);
+    n_e1.push(" ");
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
-    e1.append(e6);
-    e1.append(" ");
-    shadowRoot.appendChild(e1);
-    shadowRoot.append(" ");
+    n_e1.push(e6);
+    n_e1.push(" ");
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    n_shadowRoot.push(" ");
     const e7 = document.createElement("p");
+    const n_e7 = [];
     const f8 = f3;
     const e9 = document.createTextNode(f8());
     this.zuiSub('count', (() => { e9.nodeValue = f8(); }).bind(this));
-    e7.append(e9);
-    e7.append(" doubled is ");
+    n_e7.push(e9);
+    n_e7.push(" doubled is ");
     const f10 = (() => (this.#doubled)).bind(this);
     const e11 = document.createTextNode(f10());
     this.zuiSub('doubled', (() => { e11.nodeValue = f10(); }).bind(this));
-    e7.append(e11);
-    shadowRoot.appendChild(e7);
+    n_e7.push(e11);
+    e7.replaceChildren(...n_e7);
+    n_shadowRoot.push(e7);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

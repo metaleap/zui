@@ -76,9 +76,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		it := blockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 		*parentNodeVarName = me.nextElName()
 		it.nameSelfParent = *parentNodeVarName
-		me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
+		me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('zui-cond');")
+		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
 		me.WriteString(pref + "const " + it.fnName + " = (() => { //startCond")
-		me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 		me.WriteString(pref + "  if (" + jsSrc + ") {")
 		me.blockFnStack = append(me.blockFnStack, &it)
 
@@ -108,6 +108,7 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		*parentNodeVarName = it.namePrevParent
 		me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
 		me.WriteString(pref + "  }")
+		me.WriteString(pref + "  " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ")")
 		me.WriteString(pref + "}).bind(this); //endCond")
 		me.WriteString(pref + it.fnName + "();")
 		for _, dep := range it.deps {
@@ -116,19 +117,25 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 				me.usedSubs = true
 			}
 		}
-		me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
+		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
 
 	case BlockEachStart: // {#each ...}
 		it := blockFnStackItem{kind: BlockEachStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 		*parentNodeVarName = me.nextElName()
 		it.nameSelfParent = *parentNodeVarName
-		me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
+		me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('zui-loop');")
+		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
 		me.WriteString(pref + "const " + it.fnName + " = (() => { //startLoop")
-		me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
 		names := strings.Split(jsSrc[:len(jsSrc)-1][1:], ",")
 		assert(len(names) == 4)
+		if names[2] != "null" {
+			me.WriteString(pref + "  let " + names[2] + " = -1;")
+		}
 		me.WriteString(pref + "  for (const " + names[1] + " of " + names[0] + ") {")
+		if names[2] != "null" {
+			me.WriteString(pref + "  " + names[2] + "++;")
+		}
 		me.blockFnStack = append(me.blockFnStack, &it)
 
 	case BlockEachEnd: // {/each}
@@ -138,7 +145,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		it := me.blockFnStack[len(me.blockFnStack)-1]
 		*parentNodeVarName = it.namePrevParent
 		me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
+
 		me.WriteString(pref + "  }")
+		me.WriteString(pref + "  " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ")")
 		me.WriteString(pref + "}).bind(this); //endLoop")
 		me.WriteString(pref + it.fnName + "();")
 		for _, dep := range it.deps {
@@ -147,7 +156,7 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 				me.usedSubs = true
 			}
 		}
-		me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
+		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
 
 	}
 	return nil

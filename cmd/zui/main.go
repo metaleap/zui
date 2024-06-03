@@ -13,7 +13,6 @@ func main() {
 
 	fsDirWalk(".", func(fsPath string, fsEntry fs.DirEntry) {
 		if (!fsEntry.IsDir()) && strings.HasSuffix(fsPath, ".zui") {
-			println(fsPath)
 			zui_file_src, zui_file_hash := fsReadTextFile(fsPath, true)
 
 			js_file_path := zui.FsPathSwapExt(fsPath, ".zui", ".js")
@@ -30,6 +29,7 @@ func main() {
 				panic(err)
 			}
 			fsWriteTextFile(js_file_path, js_file_src)
+			println(fsPath)
 		}
 	})
 }

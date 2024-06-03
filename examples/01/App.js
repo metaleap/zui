@@ -7,9 +7,13 @@ export class App extends HTMLElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("h1");
-    e1.append("Welcome!");
-    shadowRoot.appendChild(e1);
+    const n_e1 = [];
+    n_e1.push("Welcome!");
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

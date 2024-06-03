@@ -28,7 +28,7 @@ func jsAssigneeNameInLabelledStmt(stmt *js.LabelledStmt) string {
 	return string(stmt.Value.(*js.ExprStmt).Value.(*js.BinaryExpr).X.(*js.Var).Name())
 }
 
-func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody *js.BlockStmt) ([]string, error) {
+func jsWalkAndRewriteTopLevelFuncAST(state *zui2js, funcName string, funcBody js.INode) ([]string, error) {
 	me := jsFuncASTRewriteWalker{
 		state:           state,
 		funcName:        funcName,

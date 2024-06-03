@@ -27,48 +27,57 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("button");
+    const n_e1 = [];
     const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
-    e1.append("\n    Clicked ");
+    n_e1.push("\n    Clicked ");
     const f3 = (() => (this.#count)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
-    e1.append(e4);
-    e1.append(" ");
+    n_e1.push(e4);
+    n_e1.push(" ");
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
-    e1.append(e6);
-    e1.append(" ");
-    shadowRoot.appendChild(e1);
-    shadowRoot.append(" ");
-    const e8 = document.createElement('span');
+    n_e1.push(e6);
+    n_e1.push(" ");
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    n_shadowRoot.push(" ");
+    const e8 = document.createElement('zui-cond');
+    const n_e8 = [];
     const f7 = (() => { //startCond
-    e8.replaceChildren();
       if (this.#count > 10) {
-    e8.append(" ");
+    n_e8.push(" ");
     const e9 = document.createElement("p");
+    const n_e9 = [];
     const f10 = f3;
     const e11 = document.createTextNode(f10());
-    e9.append(e11);
-    e9.append(" is greater than 10");
-    e8.appendChild(e9);
-    e8.append(" ");
+    n_e9.push(e11);
+    n_e9.push(" is greater than 10");
+    e9.replaceChildren(...n_e9);
+    n_e8.push(e9);
+    n_e8.push(" ");
       } else {
-    e8.append(" ");
+    n_e8.push(" ");
     const e12 = document.createElement("p");
+    const n_e12 = [];
     const f13 = f3;
     const e14 = document.createTextNode(f13());
-    e12.append(e14);
-    e12.append(" is between 0 and 10");
-    e8.appendChild(e12);
-    e8.append(" ");
+    n_e12.push(e14);
+    n_e12.push(" is between 0 and 10");
+    e12.replaceChildren(...n_e12);
+    n_e8.push(e12);
+    n_e8.push(" ");
       }
+      e8.replaceChildren(...n_e8)
     }).bind(this); //endCond
     f7();
     this.zuiSub("count", f7);
-    shadowRoot.appendChild(e8);
+    n_shadowRoot.push(e8);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

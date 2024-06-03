@@ -44,40 +44,50 @@ export class PackageInfo extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("p");
-    e1.append("\n    The ");
+    const n_e1 = [];
+    n_e1.push("\n    The ");
     const e2 = document.createElement("code");
+    const n_e2 = [];
     const f3 = (() => (this.name)).bind(this);
     const e4 = document.createTextNode(f3());
     this.zuiSub('name', (() => { e4.nodeValue = f3(); }).bind(this));
-    e2.append(e4);
-    e1.appendChild(e2);
-    e1.append(" package is ");
+    n_e2.push(e4);
+    e2.replaceChildren(...n_e2);
+    n_e1.push(e2);
+    n_e1.push(" package is ");
     const f5 = (() => (this.speed)).bind(this);
     const e6 = document.createTextNode(f5());
     this.zuiSub('speed', (() => { e6.nodeValue = f5(); }).bind(this));
-    e1.append(e6);
-    e1.append(" fast. Download version ");
+    n_e1.push(e6);
+    n_e1.push(" fast. Download version ");
     const f7 = (() => (this.version)).bind(this);
     const e8 = document.createTextNode(f7());
     this.zuiSub('version', (() => { e8.nodeValue = f7(); }).bind(this));
-    e1.append(e8);
-    e1.append(" from\n    ");
+    n_e1.push(e8);
+    n_e1.push(" from\n    ");
     const e9 = document.createElement("a");
+    const n_e9 = [];
     const f10 = (() => (this.#href)).bind(this);
     e9.setAttribute("href",  f10());
     this.zuiSub('href', () => e9.setAttribute("href",  f10()));
-    e9.append("npm");
-    e1.appendChild(e9);
-    e1.append(" and ");
+    n_e9.push("npm");
+    e9.replaceChildren(...n_e9);
+    n_e1.push(e9);
+    n_e1.push(" and ");
     const e12 = document.createElement("a");
+    const n_e12 = [];
     const f13 = (() => (this.website)).bind(this);
     e12.setAttribute("href",  f13());
     this.zuiSub('website', () => e12.setAttribute("href",  f13()));
-    e12.append("learn more here");
-    e1.appendChild(e12);
-    e1.append(" ");
-    shadowRoot.appendChild(e1);
+    n_e12.push("learn more here");
+    e12.replaceChildren(...n_e12);
+    n_e1.push(e12);
+    n_e1.push(" ");
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   static observedAttributes = ['name', 'version', 'speed', 'website'];
   attributeChangedCallback(name, vOld, vNew) {

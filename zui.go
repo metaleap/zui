@@ -128,6 +128,8 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	}
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	if htm_body != nil {
+		me.WriteString(newline + "    const n_shadowRoot = [];")
+
 		if err = me.htmlWalkBodyTagAndEmitJS(htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
@@ -247,7 +249,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 	}
 
 	pref := "\n  "
-	// now, emit the top-level decls, rewriting all func ASTs
+	// now, emit the top-level decls, rewriting all func ASTs and var-decl initial-value expressions
 	for i, stmt := range js_ast.List { // not walking our map, so as to preserve original ordering
 		is_exported := false
 		if export, _ := stmt.(*js.ExportStmt); export != nil {
@@ -289,6 +291,11 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 								return err
 							}
 							item.Default = it
+						default:
+							if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, it); err != nil {
+								return err
+							}
+							item.Default = it
 						}
 						me.WriteString(" = " + jsString(item.Default))
 					}
@@ -324,6 +331,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 }
 
 func (me *zui2js) htmlWalkBodyTagAndEmitJS(parentNode *html.Node, parentNodeVarName string) error {
+	const pref = "\n    "
 	for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
 		switch child_node.Type {
 		case html.TextNode:
@@ -336,5 +344,6 @@ func (me *zui2js) htmlWalkBodyTagAndEmitJS(parentNode *html.Node, parentNodeVarN
 			}
 		}
 	}
+	me.WriteString(pref + parentNodeVarName + ".replaceChildren(...n_" + parentNodeVarName + ");")
 	return nil
 }

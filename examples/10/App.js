@@ -30,23 +30,29 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("p");
+    const n_e1 = [];
     const f2 = (() => (this.#numbers.join(" + "))).bind(this);
     const e3 = document.createTextNode(f2());
     this.zuiSub('numbers', (() => { e3.nodeValue = f2(); }).bind(this));
-    e1.append(e3);
-    e1.append(" = ");
+    n_e1.push(e3);
+    n_e1.push(" = ");
     const f4 = (() => (this.#sum)).bind(this);
     const e5 = document.createTextNode(f4());
     this.zuiSub('sum', (() => { e5.nodeValue = f4(); }).bind(this));
-    e1.append(e5);
-    shadowRoot.appendChild(e1);
-    shadowRoot.append(" ");
+    n_e1.push(e5);
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    n_shadowRoot.push(" ");
     const e6 = document.createElement("button");
+    const n_e6 = [];
     const f7 = (() => (this.#addNumber)).bind(this);
     e6.addEventListener('click', ((evt) => (f7)().bind(this)()).bind(this));
-    e6.append(" Add a number ");
-    shadowRoot.appendChild(e6);
+    n_e6.push(" Add a number ");
+    e6.replaceChildren(...n_e6);
+    n_shadowRoot.push(e6);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

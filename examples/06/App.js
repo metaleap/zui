@@ -19,13 +19,17 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("p");
+    const n_e1 = [];
     const f2 = (() => (this.#string)).bind(this);
     const e3 = document.createElement('span');
     e3.innerHTML = f2();
     this.zuiSub('string', (() => { e3.innerHTML = f2(); }).bind(this));
-    e1.append(e3);
-    shadowRoot.appendChild(e1);
+    n_e1.push(e3);
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();

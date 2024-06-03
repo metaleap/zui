@@ -221,7 +221,7 @@ func (me *zui2js) nextElName() string { me.idxFn++; return "e" + itoa(me.idxFn) 
 func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName *string) error {
 	const pref = "\n    "
 	if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
-		me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(curNode.Data) + ");")
+		me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + strQ(curNode.Data) + ");")
 		return nil
 	}
 
@@ -232,7 +232,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 	for _, part := range parts {
 
 		if part.text != "" {
-			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + ");")
+			me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + ");")
 
 		} else if part.jsExpr != nil {
 			js_src := strings.TrimSpace(strings.TrimSuffix(jsString(part.jsExpr), ";"))
@@ -255,7 +255,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 						me.usedSubs = true
 					}
 				}
-				me.WriteString(pref + *parentNodeVarName + ".append(" + span_var_name + ");")
+				me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + span_var_name + ");")
 			}
 		}
 
@@ -279,6 +279,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 	} else {
 		me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(curNode.Data) + ");")
 	}
+	me.WriteString(pref + "const n_" + node_var_name + " = [];")
 
 	for _, attr := range curNode.Attr {
 		if strings.HasPrefix(attr.Key, "zui-") {
@@ -360,6 +361,6 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 		return err
 	}
 
-	me.WriteString(pref + parentNodeVarName + ".appendChild(" + node_var_name + ");")
+	me.WriteString(pref + "n_" + parentNodeVarName + ".push(" + node_var_name + ");")
 	return nil
 }

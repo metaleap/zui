@@ -19,13 +19,17 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
+    const n_shadowRoot = [];
     const e1 = document.createElement("img");
+    const n_e1 = [];
     const f2 = (() => ("Rick")).bind(this);
     e1.setAttribute("alt",  f2());
     const f3 = (() => (this.#src)).bind(this);
     e1.setAttribute("src",  f3());
     this.zuiSub('src', () => e1.setAttribute("src",  f3()));
-    shadowRoot.appendChild(e1);
+    e1.replaceChildren(...n_e1);
+    n_shadowRoot.push(e1);
+    shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {
     super();
