@@ -37,7 +37,7 @@ type zui2js struct {
 	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
-	blockFnStack          []jsBlockFnStackItem
+	blockFnStack          []*jsBlockFnStackItem
 	jsFnNameCache         map[string]string
 }
 

@@ -47,7 +47,7 @@ func (me *zui2js) maybeBlockness(src string) (BlockKind, string, error) {
 }
 
 func (me *zui2js) doesBlockFnStackHaveDep(dep string) bool {
-	return slices.ContainsFunc(me.blockFnStack, func(it jsBlockFnStackItem) bool {
+	return slices.ContainsFunc(me.blockFnStack, func(it *jsBlockFnStackItem) bool {
 		return slices.Contains(it.deps, dep)
 	})
 }

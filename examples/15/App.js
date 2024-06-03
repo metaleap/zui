@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1vkzdq3trnr10349obnm712e8u1crfjy38vzbbf22plxlup5slsbkc05im
+// Source file content hash: 1jxynihmu8m261h1v3o4aiwup03391c7k3dwlh31ibtzg982sinv17km286
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -55,6 +55,24 @@ export class App extends HTMLElement {
     e9.append(" is greater than 10");
     e8.appendChild(e9);
     e8.append(" ");
+      } else if (this.#count < 5) {
+    e8.append(" ");
+    const e12 = document.createElement("p");
+    const f13 = f3;
+    const e14 = document.createTextNode(f13());
+    e12.append(e14);
+    e12.append(" is less than 5");
+    e8.appendChild(e12);
+    e8.append(" ");
+      } else {
+    e8.append(" ");
+    const e15 = document.createElement("p");
+    const f16 = f3;
+    const e17 = document.createTextNode(f16());
+    e15.append(e17);
+    e15.append(" is between 5 and 10");
+    e8.appendChild(e15);
+    e8.append(" ");
       }
     }).bind(this); //FI
     f7();
@@ -78,6 +96,6 @@ zuiOnPropChanged(name) {
     fn();
 }
 
-  static ZuiTagName = "zui-app_1vkzdq3trnr10349obnm712e8u1crfjy38vzbbf22plxlup5slsbkc05im";
+  static ZuiTagName = "zui-app_1jxynihmu8m261h1v3o4aiwup03391c7k3dwlh31ibtzg982sinv17km286";
 }
 customElements.define(App.ZuiTagName, App);

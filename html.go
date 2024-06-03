@@ -236,10 +236,21 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				*parentNodeVarName = me.nextElName()
 				it.nameSelfParent = *parentNodeVarName
 				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
-				me.WriteString(pref + "const " + it.fnName + " = (() => { // IF")
+				me.WriteString(pref + "const " + it.fnName + " = (() => { //IF")
 				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 				me.WriteString(pref + "  if (" + js_src + ") {")
-				me.blockFnStack = append(me.blockFnStack, it)
+				me.blockFnStack = append(me.blockFnStack, &it)
+			} else if part.jsBlockKind == BlockIfElseIf {
+				if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+					return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
+				}
+				it := me.blockFnStack[len(me.blockFnStack)-1]
+				for _, dep := range part.jsTopLevelRefs {
+					if !slices.Contains(it.deps, dep) {
+						it.deps = append(it.deps, dep)
+					}
+				}
+				me.WriteString(pref + "  } else if (" + js_src + ") {")
 			} else if part.jsBlockKind == BlockIfElse {
 				if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
 					return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
@@ -253,7 +264,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				*parentNodeVarName = it.namePrevParent
 				me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
 				me.WriteString(pref + "  }")
-				me.WriteString(pref + "}).bind(this); // FI")
+				me.WriteString(pref + "}).bind(this); //FI")
 				me.WriteString(pref + it.fnName + "();")
 				for _, dep := range it.deps {
 					if !me.doesBlockFnStackHaveDep(dep) {
