@@ -129,6 +129,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
 		names := strings.Split(jsSrc[:len(jsSrc)-1][1:], ",")
 		assert(len(names) == 4)
+		for i, name := range names {
+			names[i] = strTrim(name)
+		}
 		if names[2] != "null" {
 			me.WriteString(pref + "  let " + names[2] + " = -1;")
 		}

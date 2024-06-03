@@ -2,10 +2,6 @@
 // Source file content hash: 2f2g5e8mtx7qz39o5xu6057e592czmk5ad3fgmk3uodv6jsx2uwv1s3fsal
 
 export class App extends HTMLElement {
-  connectedCallback() {
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements(shadowRoot);
-  }
 
 
   #v0 = 0;
@@ -64,6 +60,10 @@ if (this.#count >= 10) {
     console.log(`this will also be logged whenever count changes`);
 }
     });
+  }
+  connectedCallback() {
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    this.zuiCreateHTMLElements(shadowRoot);
   }
 #subs = new Map();
 zuiSub(name, fn) {

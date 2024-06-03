@@ -2,10 +2,6 @@
 // Source file content hash: 3pfxx99qxswzz3e8ij34fkr24l2z2cok5z5s89ca1mrcwgbmmloyvm6zk
 
 export class App extends HTMLElement {
-  connectedCallback() {
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements(shadowRoot);
-  }
 
 
 
@@ -22,6 +18,10 @@ export class App extends HTMLElement {
   }
   constructor() {
     super();
+  }
+  connectedCallback() {
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiOnPropChanged(name) {}
 

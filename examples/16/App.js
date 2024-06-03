@@ -2,10 +2,6 @@
 // Source file content hash: 7k0q95xxq8293uchw1q7kzujn1zkigsr0ck4iecu5th7ubdec0b5p2ra
 
 export class App extends HTMLElement {
-  connectedCallback() {
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements(shadowRoot);
-  }
 
 
   #v0 = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
@@ -44,9 +40,9 @@ export class App extends HTMLElement {
     const e6 = document.createElement('zui-loop');
     const n_e6 = [];
     const f5 = (() => { //startLoop
-      let  i = -1;
-      for (const  color of this.#colors) {
-       i++;
+      let i = -1;
+      for (const color of this.#colors) {
+      i++;
     n_e6.push(" ");
     const e7 = document.createElement("button");
     const n_e7 = [];
@@ -87,6 +83,10 @@ export class App extends HTMLElement {
   }
   constructor() {
     super();
+  }
+  connectedCallback() {
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    this.zuiCreateHTMLElements(shadowRoot);
   }
 #subs = new Map();
 zuiSub(name, fn) {

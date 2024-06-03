@@ -2,10 +2,6 @@
 // Source file content hash: p4uv49rgo5fi3cxcikmk7wguu1pje9tw3br7it23unvx8j5wjvc2lzhoo
 
 export class Nested extends HTMLElement {
-  connectedCallback() {
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements(shadowRoot);
-  }
   zuiCreateHTMLElements(shadowRoot) {
     const n_shadowRoot = [];
     const e1 = document.createElement("p");
@@ -17,6 +13,10 @@ export class Nested extends HTMLElement {
   }
   constructor() {
     super();
+  }
+  connectedCallback() {
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    this.zuiCreateHTMLElements(shadowRoot);
   }
   zuiOnPropChanged(name) {}
 

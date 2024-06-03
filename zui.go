@@ -112,11 +112,6 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
 	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
 
-	me.WriteString(newline + "  connectedCallback() {")
-	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
-	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
-	me.WriteString(newline + "  }")
-
 	// deal with the <script>
 	if htm_script != nil && htm_script.FirstChild != nil &&
 		htm_script.FirstChild == htm_script.LastChild && htm_script.FirstChild.Type == html.TextNode {
@@ -157,6 +152,18 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 			me.usedSubs = true
 		}
 	}
+	me.WriteString(newline + "  }")
+
+	me.WriteString(newline + "  connectedCallback() {")
+	if len(me.attrExports) > 0 {
+		for name, expr := range me.topLevelDecls {
+			if expr != nil {
+				me.WriteString(newline + "    this." + name + " = " + jsString(expr) + ";")
+			}
+		}
+	}
+	me.WriteString(newline + "    const shadowRoot = this.attachShadow({ mode: 'open' });")
+	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
 	me.WriteString(newline + "  }")
 
 	if !me.usedSubs {
@@ -288,7 +295,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 					me.WriteByte(';')
 				}
 				me.WriteString(pref + "get " + name_prop + "() { return this." + name_var + "; }")
-				me.WriteString(pref + "set " + name_prop + "(v) {")
+				me.WriteString(pref + "set " + ıf(stmt.TokenType == js.ConstToken && is_exported, "#", "") + name_prop + "(v) {")
 				me.WriteString(pref + "  if (((typeof this." + name_var + ") === 'object') || ((typeof v) === 'object') || !Object.is(this." + name_var + ", v)) {")
 				me.WriteString(pref + "    this." + name_var + " = v;")
 				me.WriteString(pref + "    this.zuiOnPropChanged('" + name_orig + "');")

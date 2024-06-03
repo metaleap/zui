@@ -2,10 +2,6 @@
 // Source file content hash: cpzhwfka6hux3hi56zlkxjq9q3ci30ihxlwr2lrj0fleyli1n21qtfmz1
 
 export class App extends HTMLElement {
-  connectedCallback() {
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.zuiCreateHTMLElements(shadowRoot);
-  }
 
 
   #v0 = [1, 2, 3, 4];
@@ -57,6 +53,10 @@ export class App extends HTMLElement {
   constructor() {
     super();
     this.zuiSub('numbers', () => this.zuiOnPropChanged('sum'));
+  }
+  connectedCallback() {
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    this.zuiCreateHTMLElements(shadowRoot);
   }
 #subs = new Map();
 zuiSub(name, fn) {
