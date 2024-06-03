@@ -11,10 +11,10 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement(Nested.ZuiTagName);
-    const fn1 = (function() { return 42; }).bind(this);
-    el1.setAttribute("answer",  fn1());
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement(Nested.ZuiTagName);
+    const f2 = (function() { return 42; }).bind(this);
+    e1.setAttribute("answer",  f2());
+    shadowRoot.appendChild(e1);
   }
   constructor() {
     super();

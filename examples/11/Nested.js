@@ -19,13 +19,13 @@ export class Nested extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("p");
-    el1.append("The answer is ");
-    const fn1 = (function() { return this.answer; }).bind(this);
-    const el2 = document.createTextNode(fn1());
-    this.zuiSub('answer', (() => { el2.nodeValue = fn1(); }).bind(this));
-    el1.append(el2);
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement("p");
+    e1.append("The answer is ");
+    const f2 = (function() { return this.answer; }).bind(this);
+    const e3 = document.createTextNode(f2());
+    this.zuiSub('answer', (() => { e3.nodeValue = f2(); }).bind(this));
+    e1.append(e3);
+    shadowRoot.appendChild(e1);
   }
   static observedAttributes = ['answer'];
   attributeChangedCallback(name, vOld, vNew) {

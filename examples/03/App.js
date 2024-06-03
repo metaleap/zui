@@ -19,13 +19,13 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("img");
-    const fn1 = () => "Rick";
-    el1.setAttribute("alt",  fn1());
-    const fn2 = (function() { return this.#src; }).bind(this);
-    el1.setAttribute("src",  fn2());
-    this.zuiSub('src', () => el1.setAttribute("src",  fn2()));
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement("img");
+    const f2 = () => "Rick";
+    e1.setAttribute("alt",  f2());
+    const f3 = (function() { return this.#src; }).bind(this);
+    e1.setAttribute("src",  f3());
+    this.zuiSub('src', () => e1.setAttribute("src",  f3()));
+    shadowRoot.appendChild(e1);
   }
   constructor() {
     super();

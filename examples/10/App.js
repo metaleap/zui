@@ -30,23 +30,23 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("p");
-    const fn1 = (function() { return this.#numbers.join(" + "); }).bind(this);
-    const el2 = document.createTextNode(fn1());
-    this.zuiSub('numbers', (() => { el2.nodeValue = fn1(); }).bind(this));
-    el1.append(el2);
-    el1.append(" = ");
-    const fn2 = (function() { return this.#sum; }).bind(this);
-    const el3 = document.createTextNode(fn2());
-    this.zuiSub('sum', (() => { el3.nodeValue = fn2(); }).bind(this));
-    el1.append(el3);
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement("p");
+    const f2 = (function() { return this.#numbers.join(" + "); }).bind(this);
+    const e3 = document.createTextNode(f2());
+    this.zuiSub('numbers', (() => { e3.nodeValue = f2(); }).bind(this));
+    e1.append(e3);
+    e1.append(" = ");
+    const f4 = (function() { return this.#sum; }).bind(this);
+    const e5 = document.createTextNode(f4());
+    this.zuiSub('sum', (() => { e5.nodeValue = f4(); }).bind(this));
+    e1.append(e5);
+    shadowRoot.appendChild(e1);
     shadowRoot.append("\n\n");
-    const el4 = document.createElement("button");
-    const fn3 = (function() { return this.#addNumber; }).bind(this);
-    el4.addEventListener('click', ((evt) => fn3().bind(this)()).bind(this));
-    el4.append(" Add a number ");
-    shadowRoot.appendChild(el4);
+    const e6 = document.createElement("button");
+    const f7 = (function() { return this.#addNumber; }).bind(this);
+    e6.addEventListener('click', ((evt) => f7().bind(this)()).bind(this));
+    e6.append(" Add a number ");
+    shadowRoot.appendChild(e6);
   }
   constructor() {
     super();

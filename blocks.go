@@ -30,9 +30,9 @@ func (me *zui2js) maybeBlockness(src string) (BlockType, string, error) {
 	case strings.HasPrefix(src, ":else if "):
 		return BlockIfElseIf, src[len(":else if "):], nil
 	case strings.TrimSpace(src) == ":else":
-		return BlockIfElse, "", nil
+		return BlockIfElse, "//", nil
 	case strings.TrimSpace(src) == "/if":
-		return BlockIfEnd, "", nil
+		return BlockIfEnd, "//", nil
 	}
 	return 0, "", errors.New(me.zuiFilePath + ": unrecognized block syntax in '" + src + "'")
 }

@@ -19,13 +19,13 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("p");
-    const fn1 = (function() { return this.#string; }).bind(this);
-    const el2 = document.createElement('span');
-    el2.innerHTML = fn1();
-    this.zuiSub('string', (() => { el2.innerHTML = fn1(); }).bind(this));
-    el1.append(el2);
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement("p");
+    const f2 = (function() { return this.#string; }).bind(this);
+    const e3 = document.createElement('span');
+    e3.innerHTML = f2();
+    this.zuiSub('string', (() => { e3.innerHTML = f2(); }).bind(this));
+    e1.append(e3);
+    shadowRoot.appendChild(e1);
   }
   constructor() {
     super();

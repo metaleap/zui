@@ -11,16 +11,16 @@ export class App extends HTMLElement {
 
 
   zuiCreateHTMLElements(shadowRoot) {
-    const el1 = document.createElement("p");
-    el1.append("This is a paragraph.");
-    shadowRoot.appendChild(el1);
+    const e1 = document.createElement("p");
+    e1.append("This is a paragraph.");
+    shadowRoot.appendChild(e1);
     shadowRoot.append("\n");
-    const el2 = document.createElement(Nested.ZuiTagName);
-    shadowRoot.appendChild(el2);
+    const e2 = document.createElement(Nested.ZuiTagName);
+    shadowRoot.appendChild(e2);
     shadowRoot.append("\n\n");
-    const el3 = document.createElement("style");
-    el3.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
-    shadowRoot.appendChild(el3);
+    const e3 = document.createElement("style");
+    e3.append("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
+    shadowRoot.appendChild(e3);
   }
   constructor() {
     super();
