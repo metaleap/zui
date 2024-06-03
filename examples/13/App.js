@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 2ll5tuo70ow2o29smnprgteser3qjkwaqtio07l12evclx82m81t1r22uy1
+// Source file content hash: 1vkzdq3trnr10349obnm712e8u1crfjy38vzbbf22plxlup5slsbkc05im
 
 export class App extends HTMLElement {
   connectedCallback() {
@@ -43,58 +43,31 @@ export class App extends HTMLElement {
     e1.append("\n");
     shadowRoot.appendChild(e1);
     shadowRoot.append("\n\n");
-    const f7 = (function() { return this.#count > 10; }).bind(this);
-    const e8 = document.createTextNode(f7());
-    this.zuiSub('count', (() => { e8.nodeValue = f7(); }).bind(this));
-    shadowRoot.append(e8);
+    const f7 = function() { // IF
+      if (this.#count > 10) {
     shadowRoot.append("\n    ");
-    const e9 = document.createElement("p");
-    const f10 = (function() { return this.#count; }).bind(this);
-    const e11 = document.createTextNode(f10());
-    this.zuiSub('count', (() => { e11.nodeValue = f10(); }).bind(this));
-    e9.append(e11);
-    e9.append(" is greater than 10");
-    shadowRoot.appendChild(e9);
+    const e8 = document.createElement("p");
+    const f9 = (function() { return this.#count; }).bind(this);
+    const e10 = document.createTextNode(f9());
+    this.zuiSub('count', (() => { e10.nodeValue = f9(); }).bind(this));
+    e8.append(e10);
+    e8.append(" is greater than 10");
+    shadowRoot.appendChild(e8);
     shadowRoot.append("\n");
-    const f12 = (function() { return this.#count < 5; }).bind(this);
-    const e13 = document.createTextNode(f12());
-    this.zuiSub('count', (() => { e13.nodeValue = f12(); }).bind(this));
-    shadowRoot.append(e13);
-    shadowRoot.append("\n    ");
-    const e14 = document.createElement("p");
-    const f15 = (function() { return this.#count; }).bind(this);
-    const e16 = document.createTextNode(f15());
-    this.zuiSub('count', (() => { e16.nodeValue = f15(); }).bind(this));
-    e14.append(e16);
-    e14.append(" is less than 5");
-    shadowRoot.appendChild(e14);
-    shadowRoot.append("\n");
-    const f17 = (function() { return ; }).bind(this);
-    const e18 = document.createTextNode(f17());
-    shadowRoot.append(e18);
-    shadowRoot.append("\n    ");
-    const e19 = document.createElement("p");
-    const f20 = (function() { return this.#count; }).bind(this);
-    const e21 = document.createTextNode(f20());
-    this.zuiSub('count', (() => { e21.nodeValue = f20(); }).bind(this));
-    e19.append(e21);
-    e19.append(" is between 5 and 10");
-    shadowRoot.appendChild(e19);
-    shadowRoot.append("\n");
-    const f22 = (function() { return ; }).bind(this);
-    const e23 = document.createTextNode(f22());
-    shadowRoot.append(e23);
+      }
+    } // IF
+    f7();
   }
   constructor() {
     super();
   }
 #subs = new Map();
-zuiSub(name, ...fn) {
+zuiSub(name, fn) {
   let arr = this.#subs.get(name);
   if (!arr)
-    arr = fn;
+    arr = [fn];
   else
-    arr.push(...fn);
+    arr.push(fn);
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
@@ -102,6 +75,6 @@ zuiOnPropChanged(name) {
     fn();
 }
 
-  static ZuiTagName = "zui-app_2ll5tuo70ow2o29smnprgteser3qjkwaqtio07l12evclx82m81t1r22uy1";
+  static ZuiTagName = "zui-app_1vkzdq3trnr10349obnm712e8u1crfjy38vzbbf22plxlup5slsbkc05im";
 }
 customElements.define(App.ZuiTagName, App);

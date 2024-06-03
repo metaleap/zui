@@ -53,12 +53,12 @@ export class App extends HTMLElement {
     this.zuiSub('numbers', () => this.zuiOnPropChanged('sum'));
   }
 #subs = new Map();
-zuiSub(name, ...fn) {
+zuiSub(name, fn) {
   let arr = this.#subs.get(name);
   if (!arr)
-    arr = fn;
+    arr = [fn];
   else
-    arr.push(...fn);
+    arr.push(fn);
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {

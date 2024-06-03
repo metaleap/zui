@@ -125,7 +125,7 @@ type htmlTextAndExprsSplitItem struct {
 	jsExpr         js.INode
 	jsExprAsHtml   bool
 	jsTopLevelRefs []string
-	jsBlockType    BlockType
+	jsBlockKind    BlockKind
 }
 
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
@@ -168,7 +168,7 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if err != nil {
 			return nil, err
 		}
-		ret_item.jsExpr, ret_item.jsBlockType = js_ast, block_type
+		ret_item.jsExpr, ret_item.jsBlockKind = js_ast, block_type
 		ret = append(ret, ret_item)
 	}
 }
@@ -216,24 +216,46 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 		return err
 	}
 	for _, part := range parts {
+
 		if part.text != "" {
 			me.WriteString(pref + parentNodeVarName + ".append(" + strQ(part.text) + ");")
+
 		} else if part.jsExpr != nil {
+			if part.jsBlockKind == BlockIfEnd {
+				it := me.blockFnStackIf[len(me.blockFnStackIf)-1]
+				me.blockFnStackIf = me.blockFnStackIf[:len(me.blockFnStackIf)-1]
+				me.WriteString(pref + "  }")
+				me.WriteString(pref + "} // IF")
+				me.WriteString(pref + it.fnName + "();")
+				for _, dep := range it.deps {
+					me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
+				}
+				continue
+			}
+
 			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
-			fn_name, span_var_name := me.nextFnName(), me.nextElName()
-			me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
-			if part.jsExprAsHtml {
-				me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
-				me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
+			if part.jsBlockKind == BlockIfStart {
+				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName()}
+				me.WriteString(pref + "const " + it.fnName + " = function() { // IF")
+				me.WriteString(pref + "  if (" + js_src + ") {")
+				me.blockFnStackIf = append(me.blockFnStackIf, it)
 			} else {
-				me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
+				fn_name, span_var_name := me.nextFnName(), me.nextElName()
+				me.WriteString(pref + "const " + fn_name + " = (function() { return " + js_src + "; }).bind(this);")
+				if part.jsExprAsHtml {
+					me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
+					me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
+				} else {
+					me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
+				}
+				for _, top_level_decl_name := range part.jsTopLevelRefs {
+					me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
+					me.usedSubs = true
+				}
+				me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 			}
-			for _, top_level_decl_name := range part.jsTopLevelRefs {
-				me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
-				me.usedSubs = true
-			}
-			me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
 		}
+
 	}
 	return nil
 }

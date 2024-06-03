@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-type BlockType int
+type BlockKind int
 
 const (
-	_ BlockType = iota
+	_ BlockKind = iota
 	BlockIfStart
 	BlockIfElseIf
 	BlockIfElse
@@ -21,7 +21,13 @@ const (
 	BlockAwaitEnd
 )
 
-func (me *zui2js) maybeBlockness(src string) (BlockType, string, error) {
+type jsBlockFnStackItem struct {
+	kind   BlockKind
+	fnName string
+	deps   []string
+}
+
+func (me *zui2js) maybeBlockness(src string) (BlockKind, string, error) {
 	switch {
 	case !(strings.HasPrefix(src, "#") || strings.HasPrefix(src, ":") || strings.HasPrefix(src, "/")):
 		return 0, src, nil

@@ -37,6 +37,7 @@ type zui2js struct {
 	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
+	blockFnStackIf        []jsBlockFnStackItem
 }
 
 func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, error) {
@@ -157,12 +158,12 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	} else {
 		me.WriteString(`
 #subs = new Map();
-zuiSub(name, ...fn) {
+zuiSub(name, fn) {
   let arr = this.#subs.get(name);
   if (!arr)
-    arr = fn;
+    arr = [fn];
   else
-    arr.push(...fn);
+    arr.push(fn);
   this.#subs.set(name, arr);
 }
 zuiOnPropChanged(name) {
