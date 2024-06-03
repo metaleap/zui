@@ -1,1 +1,2 @@
 *.zui linguist-language=svelte
+*.js linguist-generated=true
