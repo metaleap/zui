@@ -204,10 +204,10 @@ func htmlPreprocessAngledBracketsInCurlyBraces(src string) string {
 func (me *zui2js) nextFnName() string { me.idxFn++; return "f" + itoa(me.idxFn) }
 func (me *zui2js) nextElName() string { me.idxFn++; return "e" + itoa(me.idxFn) }
 
-func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName string) error {
+func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName *string) error {
 	const pref = "\n    "
 	if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
-		me.WriteString(pref + parentNodeVarName + ".append(" + strQ(curNode.Data) + ");")
+		me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(curNode.Data) + ");")
 		return nil
 	}
 
@@ -218,25 +218,31 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 	for _, part := range parts {
 
 		if part.text != "" {
-			me.WriteString(pref + parentNodeVarName + ".append(" + strQ(part.text) + ");")
+			me.WriteString(pref + *parentNodeVarName + ".append(" + strQ(part.text) + ");")
 
 		} else if part.jsExpr != nil {
 			if part.jsBlockKind == BlockIfEnd {
 				it := me.blockFnStackIf[len(me.blockFnStackIf)-1]
+				*parentNodeVarName = it.namePrevParent
 				me.blockFnStackIf = me.blockFnStackIf[:len(me.blockFnStackIf)-1]
 				me.WriteString(pref + "  }")
-				me.WriteString(pref + "} // IF")
+				me.WriteString(pref + "}).bind(this); // IF")
 				me.WriteString(pref + it.fnName + "();")
 				for _, dep := range it.deps {
 					me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
 				}
+				me.WriteString(pref + it.namePrevParent + ".appendChild(" + it.nameSelfParent + ");")
 				continue
 			}
 
 			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 			if part.jsBlockKind == BlockIfStart {
-				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName()}
-				me.WriteString(pref + "const " + it.fnName + " = function() { // IF")
+				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName}
+				*parentNodeVarName = me.nextElName()
+				it.nameSelfParent = *parentNodeVarName
+				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
+				me.WriteString(pref + "const " + it.fnName + " = (function() { // IF")
+				me.WriteString(pref + it.nameSelfParent + ".replaceChildren();")
 				me.WriteString(pref + "  if (" + js_src + ") {")
 				me.blockFnStackIf = append(me.blockFnStackIf, it)
 			} else {
@@ -252,7 +258,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 					me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
 					me.usedSubs = true
 				}
-				me.WriteString(pref + parentNodeVarName + ".append(" + span_var_name + ");")
+				me.WriteString(pref + *parentNodeVarName + ".append(" + span_var_name + ");")
 			}
 		}
 

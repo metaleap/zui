@@ -22,9 +22,11 @@ const (
 )
 
 type jsBlockFnStackItem struct {
-	kind   BlockKind
-	fnName string
-	deps   []string
+	kind           BlockKind
+	fnName         string
+	deps           []string
+	namePrevParent string
+	nameSelfParent string
 }
 
 func (me *zui2js) maybeBlockness(src string) (BlockKind, string, error) {

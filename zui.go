@@ -323,7 +323,7 @@ func (me *zui2js) htmlWalkBodyTagAndEmitJS(parentNode *html.Node, parentNodeVarN
 	for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
 		switch child_node.Type {
 		case html.TextNode:
-			if err := me.htmlWalkTextNodeAndEmitJS(child_node, parentNode, parentNodeVarName); err != nil {
+			if err := me.htmlWalkTextNodeAndEmitJS(child_node, parentNode, &parentNodeVarName); err != nil {
 				return err
 			}
 		case html.ElementNode:
