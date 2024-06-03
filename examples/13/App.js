@@ -59,6 +59,7 @@ export class App extends HTMLElement {
       }
     }).bind(this); // IF
     f7();
+    this.zuiSub("count", f7);
     shadowRoot.appendChild(e8);
   }
   constructor() {

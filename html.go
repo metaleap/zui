@@ -237,7 +237,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 
 			js_src := strings.TrimSuffix(jsString(part.jsExpr), ";")
 			if part.jsBlockKind == BlockIfStart {
-				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName}
+				it := jsBlockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 				*parentNodeVarName = me.nextElName()
 				it.nameSelfParent = *parentNodeVarName
 				me.WriteString(pref + "const " + it.nameSelfParent + " = document.createElement('span');")
