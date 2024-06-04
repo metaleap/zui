@@ -138,23 +138,43 @@ type htmlTextAndExprsSplitItem struct {
 }
 
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
-	html_text_orig := angleBracketSentinelReplUndo.Replace(htmlText)
+	html_text_orig := angleBracketSentinelReplUndo.Replace(htmlText) // for error messages only
 	for {
-		idx_close := strings.IndexByte(htmlText, '}')
-		if idx_close < 0 {
+		idx_open := strings.Index(htmlText, "{")
+		if idx_open < 0 {
 			if htmlText != "" {
 				ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
 			}
 			return
 		}
-		idx_open := strings.LastIndexByte(htmlText[:idx_close], '{')
-		if idx_open < 0 {
-			return nil, errors.New(me.zuiFilePath + ": unmatched closing brace in '" + html_text_orig + "'")
+		n, idx_close := 0, -1
+		for i := idx_open + 1; i < len(htmlText); i++ {
+			if htmlText[i] == '{' {
+				n++
+			} else if htmlText[i] == '}' {
+				if n == 0 {
+					idx_close = i // now idx of the `}`
+					break
+				} else {
+					n--
+				}
+			}
 		}
-		if pre := htmlText[:idx_open]; pre != "" {
-			ret = append(ret, htmlTextAndExprsSplitItem{text: pre})
+		if idx_close < idx_open {
+			if htmlText != "" {
+				ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
+			}
+			return
 		}
-		src_js := strTrim(htmlText[:idx_close][idx_open+1:])
+		prev := htmlText[:idx_open]
+		cur := htmlText[idx_open : idx_close+1]
+		next := htmlText[idx_close+1:]
+		if prev != "" {
+			ret = append(ret, htmlTextAndExprsSplitItem{text: prev})
+		}
+		htmlText = next
+
+		src_js := strTrim(cur[:len(cur)-1][1:])
 		ret_item := htmlTextAndExprsSplitItem{jsExprAsHtml: strings.HasPrefix(src_js, "@html ") || strings.HasPrefix(src_js, "@html\t") || strings.HasPrefix(src_js, "@html\r") || strings.HasPrefix(src_js, "@html\n") || strings.HasPrefix(src_js, "@html\v") || strings.HasPrefix(src_js, "@html\f") || strings.HasPrefix(src_js, "@html\b")}
 		if ret_item.jsExprAsHtml {
 			src_js = strTrim(src_js[len("@html"):])
@@ -162,7 +182,6 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if src_js == "" {
 			return nil, errors.New(me.zuiFilePath + ": expression expected inside the '{}' in '" + html_text_orig + "'")
 		}
-		htmlText = htmlText[idx_close+1:]
 
 		src_js = angleBracketSentinelReplUndo.Replace(src_js)
 		block_type, src_js, err := me.blocknessCheck(src_js)
