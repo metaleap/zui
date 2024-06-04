@@ -1,0 +1,2 @@
+<!--https://learn.svelte.dev/tutorial/event-modifiers-->
+<button on:click|once={(evt) => alert("clicked")}>Click me once</button>

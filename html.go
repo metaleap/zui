@@ -140,7 +140,7 @@ type htmlTextAndExprsSplitItem struct {
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
 	html_text_orig := angleBracketSentinelReplUndo.Replace(htmlText) // for error messages only
 	for {
-		idx_open := strings.Index(htmlText, "{")
+		idx_open := strings.IndexByte(htmlText, '{')
 		if idx_open < 0 {
 			if htmlText != "" {
 				ret = append(ret, htmlTextAndExprsSplitItem{text: htmlText})
@@ -188,7 +188,6 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if err != nil {
 			return nil, err
 		}
-		println(">>>" + src_js + "<<<")
 		js_ast, err := js.Parse(parse.NewInputString(src_js), js.Options{Inline: true})
 		if err != nil {
 			return nil, errors.New(me.zuiFilePath + ": '" + err.Error() + "' in '" + src_js + "' near `" + html_text_orig + "`")
