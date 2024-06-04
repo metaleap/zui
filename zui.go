@@ -70,7 +70,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	if err != nil {
 		return "", err
 	}
-	src_htm = htmlPreprocessTrickyCharsInCurlyBraces(src_htm)
+	src_htm = htmlPreprocessCurlyAttrs(src_htm)
 	htm_top_nodes, err := html.ParseFragment(
 		strings.NewReader(strTrim(src_htm)),
 		&html.Node{
@@ -169,8 +169,8 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 
 	me.WriteString(newline + "  connectedCallback() {")
 	if len(me.attrExports) > 0 {
-		for name, expr := range me.topLevelDecls {
-			if expr != nil {
+		for _, name := range orderedMapKeys(me.topLevelDecls) {
+			if expr := me.topLevelDecls[name]; expr != nil {
 				me.WriteString(newline + "    this." + ıf(slices.Contains(me.attrExports, name), "", "#") + name + " = " + jsString(expr) + ";")
 			}
 		}

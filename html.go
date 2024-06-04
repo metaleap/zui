@@ -138,7 +138,7 @@ type htmlTextAndExprsSplitItem struct {
 }
 
 func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExprsSplitItem, _ error) {
-	html_text_orig := htmlText
+	html_text_orig := angleBracketSentinelReplUndo.Replace(htmlText)
 	for {
 		idx_close := strings.IndexByte(htmlText, '}')
 		if idx_close < 0 {
@@ -169,9 +169,10 @@ func (me *zui2js) htmlSplitTextAndJSExprs(htmlText string) (ret []htmlTextAndExp
 		if err != nil {
 			return nil, err
 		}
+		println(">>>" + src_js + "<<<")
 		js_ast, err := js.Parse(parse.NewInputString(src_js), js.Options{Inline: true})
 		if err != nil {
-			return nil, errors.New(me.zuiFilePath + ": " + err.Error() + " in '" + src_js + "'")
+			return nil, errors.New(me.zuiFilePath + ": '" + err.Error() + "' in '" + src_js + "' near `" + html_text_orig + "`")
 		}
 		ret_item.jsTopLevelRefs, err = jsWalkAndRewriteTopLevelFuncAST(me, src_js, &js_ast.BlockStmt)
 		if err != nil {
@@ -190,29 +191,40 @@ var (
 	replApos                     = strings.NewReplacer("'", "&apos;")
 )
 
-func htmlPreprocessTrickyCharsInCurlyBraces(src string) string {
-	var buf strings.Builder
+func htmlPreprocessCurlyAttrs(src string) string {
+	idx_start := 0
 	for {
-		idx_close := strings.IndexByte(src, '}')
-		if idx_close < 0 {
-			buf.WriteString(src)
-			break
-		}
-		idx_open := strings.LastIndexByte(src[:idx_close], '{')
+		idx_open := strings.Index(src[idx_start:], "={")
 		if idx_open < 0 {
-			buf.WriteString(src)
 			break
 		}
-		buf.WriteString(src[:idx_open])
-		cur := src[idx_open : idx_close+1]
-		if idx_open >= 5 && src[idx_open-1] == '=' && idx_close < (len(src)-1) &&
-			(src[idx_close+1] == '>' || htmlTextIsFullyWhitespace(src[idx_close+1:][:1])) {
-			cur = "'" + replApos.Replace(cur) + "'"
+		idx_open = idx_open + idx_start + 1 // now idx of the `{`
+		n, idx_close := 0, -1
+		for i := idx_open + 2; i < len(src); i++ {
+			if src[i] == '{' {
+				n++
+			} else if src[i] == '}' {
+				if n == 0 {
+					idx_close = i // now idx of the `}`
+					break
+				} else {
+					n--
+				}
+			}
 		}
-		buf.WriteString(angleBracketSentinelReplDo.Replace(cur))
-		src = src[idx_close+1:]
+		if idx_close < idx_open {
+			break
+		}
+		prev := src[:idx_open]
+		cur := src[idx_open : idx_close+1]
+		next := src[idx_close+1:]
+
+		cur = replApos.Replace(angleBracketSentinelReplDo.Replace(cur))
+		src = prev + "'" + cur + "'"
+		idx_start = len(src)
+		src += next
 	}
-	return buf.String()
+	return src
 }
 
 func (me *zui2js) nextFnName() string { me.idxFn++; return "f" + itoa(me.idxFn) }
@@ -342,7 +354,6 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 			me.WriteString(attr_val_js_funcs)
 			if strings.Contains(attr.Key, ":") {
 				if len(parts) != 1 || parts[0].jsExpr == nil {
-					println(">>" + parts[0].text + "<<<")
 					return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
 				}
 				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
