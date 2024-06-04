@@ -1,11 +1,11 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1dbm8lr84gey3jmolmlg7bww81w7tzucnhi1vr3ghbyhlif4bo62honhm
+// Source file content hash: 1m44rlry9mugrtfv2ndfzhyoe2fr84xz0x4ke03sngk578d3iqq1725kpj
 
 import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
 export class App extends ZuiElement {
 
 
-  #v1 = [{id: 1, name: "apple"}, {id: 2, name: "banana"}, {id: 3, name: "carrot"}, {id: 4, name: "doughnut"}, {id: 5, name: "egg"}];
+  #v1 = [{id: "id1", name: "apple"}, {id: "id2", name: "banana"}, {id: "id3", name: "carrot"}, {id: "id4", name: "doughnut"}, {id: "id5", name: "egg"}];
   get #things() { return this.#v1; }
   set #things(v) {
     if (!deepEq(this.#v1, v)) {
@@ -62,7 +62,7 @@ export class App extends ZuiElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
 
-  static ZuiTagName = "zui-app_1dbm8lr84gey3jmolmlg7bww81w7tzucnhi1vr3ghbyhlif4bo62honhm";
+  static ZuiTagName = "zui-app_1m44rlry9mugrtfv2ndfzhyoe2fr84xz0x4ke03sngk578d3iqq1725kpj";
 }
 import { Thing } from './Thing.js';
 customElements.define(App.ZuiTagName, App);

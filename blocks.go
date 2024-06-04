@@ -49,11 +49,13 @@ func (me *zui2js) blocknessCheck(src string) (BlockKind, string, error) {
 		if !ok {
 			return 0, "", errors.New(me.zuiFilePath + ": expected 'as' in `{" + src + "}`")
 		}
+		rhs, id, _ := strings.Cut(rhs, "(")
+		id = strTrim(strings.TrimSuffix(strTrim(id), ")"))
 		name, idx, _ := strings.Cut(rhs, ",")
 		if lhs, name, idx = strTrim(lhs), strTrim(name), strTrim(idx); lhs == "" || name == "" {
 			return 0, "", errors.New(me.zuiFilePath + ": expected identifiers around 'as' in `{" + src + "}`")
 		}
-		src_js = "[" + lhs + "," + name + "," + ıf(idx == "", "null", idx) + ",null]"
+		src_js = "[" + lhs + "," + name + "," + ıf(idx == "", "null", idx) + "," + ıf(id == "", "null", id) + "]"
 		return BlockEachStart, src_js, nil
 	case strTrim(src) == "/each":
 		return BlockEachEnd, "", nil
