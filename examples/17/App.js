@@ -37,6 +37,9 @@ export class App extends ZuiElement {
     const n_e4 = [];
     const f3 = (() => { //startLoop
       for (const thing of this.#things) {
+      const it_thing = newE('zui-item');
+      it_thing.setAttribute('item-id', thing.id);
+      const   n_it_thing = [];
     n_e4.push(" ");
     const e5 = newE(Thing.ZuiTagName);
     const n_e5 = [];

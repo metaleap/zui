@@ -134,12 +134,18 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		for i, name := range names {
 			names[i] = strTrim(name)
 		}
-		if names[2] != "null" {
-			me.WriteString(pref + "  let " + names[2] + " = -1;")
+		if var_name_idx := names[2]; var_name_idx != "null" {
+			me.WriteString(pref + "  let " + var_name_idx + " = -1;")
 		}
 		me.WriteString(pref + "  for (const " + names[1] + " of " + names[0] + ") {")
-		if names[2] != "null" {
-			me.WriteString(pref + "  " + names[2] + "++;")
+		if var_name_idx := names[2]; var_name_idx != "null" {
+			me.WriteString(pref + "  " + var_name_idx + "++;")
+		}
+		if expr_id := names[3]; expr_id != "null" {
+			var_name_item := "it_" + names[1]
+			me.WriteString(pref + "  const " + var_name_item + " = newE('zui-item');")
+			me.WriteString(pref + "  " + var_name_item + ".setAttribute('item-id', " + expr_id + ");")
+			me.WriteString(pref + "  const   n_" + var_name_item + " = [];")
 		}
 		me.blockFnStack = append(me.blockFnStack, &it)
 
@@ -151,6 +157,7 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		*parentNodeVarName = it.namePrevParent
 		me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
 
+		// me.WriteString(pref + "  </zui-item>")
 		me.WriteString(pref + "  }")
 		me.WriteString(pref + "  " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
 		me.WriteString(pref + "  n_" + it.nameSelfParent + ".splice(0);")
