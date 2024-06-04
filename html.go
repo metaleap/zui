@@ -218,6 +218,24 @@ func htmlPreprocessTrickyCharsInCurlyBraces(src string) string {
 func (me *zui2js) nextFnName() string { me.idxFn++; return "f" + itoa(me.idxFn) }
 func (me *zui2js) nextElName() string { me.idxFn++; return "e" + itoa(me.idxFn) }
 
+func (me *zui2js) htmlWalkElemNodeAndEmitJS(node *html.Node, nodeParentVarName string) error {
+	const pref = "\n    "
+	for child_node := node.FirstChild; child_node != nil; child_node = child_node.NextSibling {
+		switch child_node.Type {
+		case html.TextNode:
+			if err := me.htmlWalkTextNodeAndEmitJS(child_node, node, &nodeParentVarName); err != nil {
+				return err
+			}
+		case html.ElementNode:
+			if err := me.htmlWalkTagNodeAndEmitJS(child_node, nodeParentVarName); err != nil {
+				return err
+			}
+		}
+	}
+	me.WriteString(pref + nodeParentVarName + ".replaceChildren(...n_" + nodeParentVarName + ");")
+	return nil
+}
+
 func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName *string) error {
 	const pref = "\n    "
 	if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
@@ -262,7 +280,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 	return nil
 }
 
-func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarName string) error {
+func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName string) error {
 	const pref = "\n    "
 	node_var_name := me.nextElName()
 	is_zui_tag := curNode.Data == ("zui_" + me.zuiFileIdent)
@@ -356,7 +374,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 		}
 	}
 
-	if err := me.htmlWalkBodyTagAndEmitJS(curNode, node_var_name); err != nil {
+	if err := me.htmlWalkElemNodeAndEmitJS(curNode, node_var_name); err != nil {
 		return err
 	}
 

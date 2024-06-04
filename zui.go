@@ -140,8 +140,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "  zuiCreateHTMLElements(shadowRoot) {")
 	if htm_body != nil {
 		me.WriteString(newline + "    const n_shadowRoot = [];")
-
-		if err = me.htmlWalkBodyTagAndEmitJS(htm_body, "shadowRoot"); err != nil {
+		if err = me.htmlWalkElemNodeAndEmitJS(htm_body, "shadowRoot"); err != nil {
 			return "", err
 		}
 	}
@@ -315,23 +314,5 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 			}
 		}
 	}
-	return nil
-}
-
-func (me *zui2js) htmlWalkBodyTagAndEmitJS(parentNode *html.Node, parentNodeVarName string) error {
-	const pref = "\n    "
-	for child_node := parentNode.FirstChild; child_node != nil; child_node = child_node.NextSibling {
-		switch child_node.Type {
-		case html.TextNode:
-			if err := me.htmlWalkTextNodeAndEmitJS(child_node, parentNode, &parentNodeVarName); err != nil {
-				return err
-			}
-		case html.ElementNode:
-			if err := me.htmlWalkElemNodeAndEmitJS(child_node, parentNodeVarName); err != nil {
-				return err
-			}
-		}
-	}
-	me.WriteString(pref + parentNodeVarName + ".replaceChildren(...n_" + parentNodeVarName + ");")
 	return nil
 }
