@@ -42,6 +42,7 @@ export class App extends ZuiElement {
     const n_e6 = [];
     const f5 = (() => { //startLoop
       let i = -1;
+      n_e6.splice(0);
       for (const color of this.#colors) {
       i++;
     n_e6.push(" ");
@@ -66,8 +67,13 @@ export class App extends ZuiElement {
     n_e6.push(e7);
     n_e6.push(" ");
       }
-      e6.replaceChildren(...n_e6);
-      n_e6.splice(0);
+      if (n_e6.length != e6.childNodes.length)
+        e6.replaceChildren(...n_e6);
+      else
+        for (let i = 0; i < n_e6.length; i++) {
+          if (!n_e6[i].isEqualNode(e6.childNodes[i]))
+            e6.replaceChild(n_e6[i], e6.childNodes[i]);
+        }
     }).bind(this); //endLoop
     f5();
     this.zuiSub("colors", f5);

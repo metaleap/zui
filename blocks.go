@@ -134,18 +134,20 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		for i, name := range names {
 			names[i] = strTrim(name)
 		}
-		if var_name_idx := names[2]; var_name_idx != "null" {
-			me.WriteString(pref + "  let " + var_name_idx + " = -1;")
+		loop_arr, loop_item, loop_idx, loop_id := names[0], names[1], names[2], names[3]
+		if loop_idx != "null" {
+			me.WriteString(pref + "  let " + loop_idx + " = -1;")
 		}
-		me.WriteString(pref + "  for (const " + names[1] + " of " + names[0] + ") {")
-		if var_name_idx := names[2]; var_name_idx != "null" {
-			me.WriteString(pref + "  " + var_name_idx + "++;")
+		me.WriteString(pref + "  n_" + it.nameSelfParent + ".splice(0);")
+		me.WriteString(pref + "  for (const " + loop_item + " of " + loop_arr + ") {")
+		if loop_idx != "null" {
+			me.WriteString(pref + "  " + loop_idx + "++;")
 		}
-		if expr_id := names[3]; expr_id != "null" {
-			var_name_item := "it_" + names[1]
-			me.WriteString(pref + "  const " + var_name_item + " = newE('zui-item');")
-			me.WriteString(pref + "  " + var_name_item + ".setAttribute('item-id', " + expr_id + ");")
-			me.WriteString(pref + "  const   n_" + var_name_item + " = [];")
+		if loop_id != "null" {
+			// var_name_item := "it_" + names[1]
+			// me.WriteString(pref + "  const " + var_name_item + " = newE('zui-item');")
+			// me.WriteString(pref + "  " + var_name_item + ".setAttribute('item-id', " + expr_id + ");")
+			// me.WriteString(pref + "  const   n_" + var_name_item + " = [];")
 		}
 		me.blockFnStack = append(me.blockFnStack, &it)
 
@@ -156,11 +158,14 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		it := me.blockFnStack[len(me.blockFnStack)-1]
 		*parentNodeVarName = it.namePrevParent
 		me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
-
-		// me.WriteString(pref + "  </zui-item>")
 		me.WriteString(pref + "  }")
-		me.WriteString(pref + "  " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
-		me.WriteString(pref + "  n_" + it.nameSelfParent + ".splice(0);")
+		me.WriteString(pref + "  if (n_" + it.nameSelfParent + ".length != " + it.nameSelfParent + ".childNodes.length)")
+		me.WriteString(pref + "    " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
+		me.WriteString(pref + "  else")
+		me.WriteString(pref + "    for (let i = 0; i < n_" + it.nameSelfParent + ".length; i++) {")
+		me.WriteString(pref + "      if (!n_" + it.nameSelfParent + "[i].isEqualNode(" + it.nameSelfParent + ".childNodes[i]))")
+		me.WriteString(pref + "        " + it.nameSelfParent + ".replaceChild(n_" + it.nameSelfParent + "[i], " + it.nameSelfParent + ".childNodes[i]);")
+		me.WriteString(pref + "    }")
 		me.WriteString(pref + "}).bind(this); //endLoop")
 		me.WriteString(pref + it.fnName + "();")
 		for _, dep := range it.deps {

@@ -36,10 +36,8 @@ export class App extends ZuiElement {
     const e4 = newE('zui-loop');
     const n_e4 = [];
     const f3 = (() => { //startLoop
+      n_e4.splice(0);
       for (const thing of this.#things) {
-      const it_thing = newE('zui-item');
-      it_thing.setAttribute('item-id', thing.id);
-      const   n_it_thing = [];
     n_e4.push(" ");
     const e5 = newE(Thing.ZuiTagName);
     const n_e5 = [];
@@ -49,8 +47,13 @@ export class App extends ZuiElement {
     n_e4.push(e5);
     n_e4.push(" ");
       }
-      e4.replaceChildren(...n_e4);
-      n_e4.splice(0);
+      if (n_e4.length != e4.childNodes.length)
+        e4.replaceChildren(...n_e4);
+      else
+        for (let i = 0; i < n_e4.length; i++) {
+          if (!n_e4[i].isEqualNode(e4.childNodes[i]))
+            e4.replaceChild(n_e4[i], e4.childNodes[i]);
+        }
     }).bind(this); //endLoop
     f3();
     this.zuiSub("things", f3);
