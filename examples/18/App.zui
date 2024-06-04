@@ -3,10 +3,11 @@
     function getRandomNumber() {
         return new Promise((resolve, fail) => {
             setTimeout(() => {
-                const n = Date.now() * Math.random();
-                if (n < 0.1) {
-                    fail(new Error("Too small: " + n));
+                const r = Math.random();
+                if (r < 0.123) {
+                    fail(new Error("Too small: " + r));
                 }
+                const n = Date.now() * r;
                 resolve(n);
             }, 2000);
         });

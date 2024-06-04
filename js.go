@@ -93,7 +93,7 @@ func (me *jsFuncASTRewriteWalker) gather(node js.INode) {
 		op := bin_op.Op.String()
 		is_assign := strings.Contains(op, "=") && !strings.Contains(op, "==") && (op != "!=") && (op != ">=") && (op != "<=")
 		if is_assign {
-			if lhs := me.findLhsVar(bin_op.X); lhs != nil {
+			if lhs, dot_or_idx := me.findLhsVar(bin_op.X, false); lhs != nil && dot_or_idx {
 				if name := string(lhs.Data); me.isTopLevel(name) {
 					me.rewrites[node] = &js.BlockStmt{List: []js.IStmt{
 						&js.ExprStmt{Value: &js.BinaryExpr{
@@ -129,16 +129,16 @@ func (me *jsFuncASTRewriteWalker) isTopLevel(name string) bool {
 	return is_top_level
 }
 
-func (me *jsFuncASTRewriteWalker) findLhsVar(lhs js.IExpr) *js.Var {
+func (me *jsFuncASTRewriteWalker) findLhsVar(lhs js.IExpr, compound bool) (*js.Var, bool) {
 	switch lhs := lhs.(type) {
 	case *js.Var:
-		return lhs
+		return lhs, compound
 	case *js.IndexExpr:
-		return me.findLhsVar(lhs.X)
+		return me.findLhsVar(lhs.X, true)
 	case *js.DotExpr:
-		return me.findLhsVar(lhs.X)
+		return me.findLhsVar(lhs.X, true)
 	}
-	return nil
+	return nil, false
 }
 
 func (me *jsFuncASTRewriteWalker) rewrite(node js.INode) {

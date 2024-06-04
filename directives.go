@@ -12,7 +12,7 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 	switch {
 	case strings.HasPrefix(attr.Key, "on:"):
 		evt_name := strTrim(attr.Key[len("on:"):])
-		me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => (" + jsAttrValFnName + ")().bind(this)()).bind(this));")
+		me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => (" + jsAttrValFnName + ")().bind(this)(evt)).bind(this));")
 	default:
 		return errors.New(me.zuiFilePath + ": unknown directive '" + attr.Key + "'")
 	}

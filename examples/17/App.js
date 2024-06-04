@@ -15,10 +15,7 @@ export class App extends ZuiElement {
   }
 
 #handleClick() {
-    {
-        this.#things = this.#things.slice(1);
-        this.zuiOnPropChanged("things");
-    }
+    this.#things = this.#things.slice(1);
 }
 
 
@@ -28,7 +25,7 @@ export class App extends ZuiElement {
     const e1 = newE("button");
     const n_e1 = [];
     const f2 = (() => (this.#handleClick)).bind(this);
-    e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
+    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this));
     n_e1.push(newT(" Remove first thing "));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

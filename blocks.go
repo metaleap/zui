@@ -28,6 +28,7 @@ type blockFnStackItem struct {
 	deps           []string
 	namePrevParent string
 	nameSelfParent string
+	tmpTag         string
 }
 
 func (me *zui2js) blocknessCheck(src string) (BlockKind, string, error) {
@@ -84,6 +85,53 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 
 	switch part.jsBlockKind {
 
+	case BlockAwaitStart:
+		it := blockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
+		*parentNodeVarName = me.nextElName()
+		it.nameSelfParent, it.tmpTag = *parentNodeVarName, jsSrc
+		me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-wait');")
+		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
+		me.WriteString(pref + "const " + it.fnName + " = (async () => { //startWait")
+		me.blockFnStack = append(me.blockFnStack, &it)
+
+	case BlockAwaitThen:
+		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+			return errors.New(me.zuiFilePath + ": unmatched `{" + jsSrc + "}`")
+		}
+		it := me.blockFnStack[len(me.blockFnStack)-1]
+		me.WriteString(pref + "  " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
+		me.WriteString(pref + "  n_" + it.nameSelfParent + ".splice(0);")
+		me.WriteString(pref + "  try {")
+		me.WriteString(pref + "    const " + jsSrc + " = await " + it.tmpTag + ";")
+
+	case BlockAwaitCatch:
+		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+			return errors.New(me.zuiFilePath + ": unmatched `{" + jsSrc + "}`")
+		}
+		it := me.blockFnStack[len(me.blockFnStack)-1]
+		me.WriteString(pref + "    " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
+		me.WriteString(pref + "    n_" + it.nameSelfParent + ".splice(0);")
+		me.WriteString(pref + "  } catch (" + jsSrc + ") {")
+
+	case BlockAwaitEnd:
+		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
+			return errors.New(me.zuiFilePath + ": unmatched `" + jsSrc + "`")
+		}
+		it := me.blockFnStack[len(me.blockFnStack)-1]
+		*parentNodeVarName = it.namePrevParent
+		me.blockFnStack = me.blockFnStack[:len(me.blockFnStack)-1]
+		me.WriteString(pref + "    " + it.nameSelfParent + ".replaceChildren(...n_" + it.nameSelfParent + ");")
+		me.WriteString(pref + "    n_" + it.nameSelfParent + ".splice(0);")
+		me.WriteString(pref + "  }")
+		me.WriteString(pref + "}).bind(this); //endWait")
+		me.WriteString(pref + it.fnName + "();")
+		for _, dep := range it.deps {
+			if !me.blockFnStackHasDep(dep) {
+				me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
+			}
+		}
+		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
+
 	case BlockIfStart: // {#if ...}
 		it := blockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 		*parentNodeVarName = me.nextElName()
@@ -96,7 +144,7 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 
 	case BlockIfElseIf: // {:else if ...}
 		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
-			return errors.New(me.zuiFilePath + ": unmatched `{" + jsString(part.jsExpr) + "}`")
+			return errors.New(me.zuiFilePath + ": unmatched `{" + jsSrc + "}`")
 		}
 		it := me.blockFnStack[len(me.blockFnStack)-1]
 		for _, dep := range part.jsTopLevelRefs {
@@ -108,13 +156,13 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 
 	case BlockIfElse: // {:else}
 		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
-			return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
+			return errors.New(me.zuiFilePath + ": unmatched `" + jsSrc + "`")
 		}
 		me.WriteString(pref + "  } else {")
 
 	case BlockIfEnd: // {/if}
 		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockIfStart {
-			return errors.New(me.zuiFilePath + ": unmatched `" + jsString(part.jsExpr) + "`")
+			return errors.New(me.zuiFilePath + ": unmatched `" + jsSrc + "`")
 		}
 		it := me.blockFnStack[len(me.blockFnStack)-1]
 		*parentNodeVarName = it.namePrevParent
@@ -161,7 +209,7 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 
 	case BlockEachEnd: // {/each}
 		if len(me.blockFnStack) == 0 || me.blockFnStack[len(me.blockFnStack)-1].kind != BlockEachStart {
-			return errors.New(me.zuiFilePath + ": unmatched `{" + jsString(part.jsExpr) + "}`")
+			return errors.New(me.zuiFilePath + ": unmatched `{" + jsSrc + "}`")
 		}
 		it := me.blockFnStack[len(me.blockFnStack)-1]
 		*parentNodeVarName = it.namePrevParent

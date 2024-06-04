@@ -12,7 +12,7 @@ export function deepEq(val1, val2) {
     if ((val1 === val2) || ((val1 === null) && (val2 === (void 0))) || ((val1 === (void 0)) && (val2 === null)))
         return true
 
-    if ((typeof val1) !== (typeof val2))
+    if (((typeof val1) !== (typeof val2)) || (val1['catch'] && val1['finally'] && val1['then'] && val2['catch'] && val2['finally'] && val2['then']))
         return false
 
     if (((typeof val1) === 'number') && ((typeof val2) === 'number'))

@@ -56,8 +56,8 @@ export class Thing extends ZuiElement {
     super();
   }
   connectedCallback() {
-    this.#emojis = {apple: "🍎", banana: "🍌", carrot: "🥕", doughnut: "🍩", egg: "🥚"};
     this.#emoji = this.#emojis[this.name];
+    this.#emojis = {apple: "🍎", banana: "🍌", carrot: "🥕", doughnut: "🍩", egg: "🥚"};
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.zuiCreateHTMLElements(shadowRoot);
   }
