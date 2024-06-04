@@ -1,16 +1,17 @@
 // Code generated from App.zui. DO NOT EDIT
 // Source file content hash: bz0x9g56pye3od150qsa8yum2ui1zu4834cyu2h42kb153smve1etljw4
 
-export class App extends HTMLElement {
+import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
+export class App extends ZuiElement {
   zuiCreateHTMLElements(shadowRoot) {
     const n_shadowRoot = [];
-    const e1 = document.createElement("p");
+    const e1 = newE("p");
     const n_e1 = [];
     n_e1.push("This is a paragraph.");
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     n_shadowRoot.push(" ");
-    const e2 = document.createElement("style");
+    const e2 = newE("style");
     const n_e2 = [];
     n_e2.push("\n    p {\n        color: goldenrod;\n        font-family: \"Comic Sans MS\", cursive;\n        font-size: 2em;\n    }\n");
     e2.replaceChildren(...n_e2);
@@ -24,7 +25,6 @@ export class App extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.zuiCreateHTMLElements(shadowRoot);
   }
-  zuiOnPropChanged(name) {}
 
   static ZuiTagName = "zui-app_bz0x9g56pye3od150qsa8yum2ui1zu4834cyu2h42kb153smve1etljw4";
 }

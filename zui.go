@@ -2,7 +2,9 @@ package zui
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -11,6 +13,16 @@ import (
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 )
+
+var (
+	ZuiJsFilePath string = "./zui.js"
+)
+
+func init() {
+	if s := os.Getenv("ZUI_JS"); s != "" {
+		ZuiJsFilePath = s
+	}
+}
 
 func FirstLineJS(zuiFilePath string, zuiFileHash string) string {
 	return "// Code generated from " + filepath.Base(zuiFilePath) + ". DO NOT EDIT\n// Source file content hash: " + zuiFileHash + "\n"
@@ -34,7 +46,6 @@ type zui2js struct {
 	topLevelReactiveStmts map[string][]string
 	imports               map[string]string
 	attrExports           []string
-	usedSubs              bool
 	idxFn                 int
 	idxEl                 int
 	blockFnStack          []*blockFnStackItem
@@ -110,7 +121,12 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	zui_file_name := filepath.Base(zuiFilePath)
 	newline, zui_class_name := "\n", zui_file_name[:len(zui_file_name)-len(".zui")]
 	me.WriteString(FirstLineJS(zuiFilePath, zuiFileHash))
-	me.WriteString(newline + "export class " + zui_class_name + " extends HTMLElement {")
+	zuijs_file_path, err := filepath.Rel(filepath.Dir(me.zuiFilePath), ZuiJsFilePath)
+	if err != nil {
+		return "", err
+	}
+	me.WriteString(newline + "import { ZuiElement, deepEq, newE, newT } from '" + zuijs_file_path + "';")
+	me.WriteString(newline + "export class " + zui_class_name + " extends ZuiElement {")
 
 	// deal with the <script>
 	if htm_script != nil && htm_script.FirstChild != nil &&
@@ -143,13 +159,11 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	for _, name := range orderedMapKeys(me.topLevelReactiveDeps) {
 		for _, dep := range me.topLevelReactiveDeps[name] {
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => this.zuiOnPropChanged('" + name + "'));")
-			me.usedSubs = true
 		}
 	}
 	for _, src_js := range orderedMapKeys(me.topLevelReactiveStmts) {
 		for _, dep := range me.topLevelReactiveStmts[src_js] {
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => {\n" + src_js + "\n    });")
-			me.usedSubs = true
 		}
 	}
 	me.WriteString(newline + "  }")
@@ -158,7 +172,7 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	if len(me.attrExports) > 0 {
 		for name, expr := range me.topLevelDecls {
 			if expr != nil {
-				me.WriteString(newline + "    this." + name + " = " + jsString(expr) + ";")
+				me.WriteString(newline + "    this." + ıf(slices.Contains(me.attrExports, name), "", "#") + name + " = " + jsString(expr) + ";")
 			}
 		}
 	}
@@ -166,32 +180,13 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "    this.zuiCreateHTMLElements(shadowRoot);")
 	me.WriteString(newline + "  }")
 
-	if !me.usedSubs {
-		me.WriteString(newline + "  zuiOnPropChanged(name) {}")
-	} else {
-		me.WriteString(`
-#subs = new Map();
-zuiSub(name, fn) {
-  let arr = this.#subs.get(name);
-  if (!arr)
-    arr = [fn];
-  else
-    arr.push(fn);
-  this.#subs.set(name, arr);
-}
-zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
-    fn();
-}`)
-	}
-
 	// register the HTML Custom Element
 	me.WriteString(newline + newline + "  static ZuiTagName = " + strQ("zui-"+strLo(zui_class_name)+"_"+zuiFileHash) + ";")
 	me.WriteString(newline + "}")
 	for _, zui_import_name := range orderedMapKeys(me.imports) {
 		zui_import_path := me.imports[zui_import_name]
 		zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
-		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "'")
+		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "';")
 	}
 	me.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
 
@@ -296,7 +291,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 				}
 				me.WriteString(pref + "get " + name_prop + "() { return this." + name_var + "; }")
 				me.WriteString(pref + "set " + ıf(stmt.TokenType == js.ConstToken && is_exported, "#", "") + name_prop + "(v) {")
-				me.WriteString(pref + "  if (((typeof this." + name_var + ") === 'object') || ((typeof v) === 'object') || !Object.is(this." + name_var + ", v)) {")
+				me.WriteString(pref + "  if (!deepEq(this." + name_var + ", v)) {")
 				me.WriteString(pref + "    this." + name_var + " = v;")
 				me.WriteString(pref + "    this.zuiOnPropChanged('" + name_orig + "');")
 				me.WriteString(pref + "  }")

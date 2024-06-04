@@ -1,13 +1,14 @@
 // Code generated from App.zui. DO NOT EDIT
 // Source file content hash: 2f2g5e8mtx7qz39o5xu6057e592czmk5ad3fgmk3uodv6jsx2uwv1s3fsal
 
-export class App extends HTMLElement {
+import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
+export class App extends ZuiElement {
 
 
   #v0 = 0;
   get #count() { return this.#v0; }
   set #count(v) {
-    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+    if (!deepEq(this.#v0, v)) {
       this.#v0 = v;
       this.zuiOnPropChanged('count');
     }
@@ -24,18 +25,18 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const n_shadowRoot = [];
-    const e1 = document.createElement("button");
+    const e1 = newE("button");
     const n_e1 = [];
     const f2 = (() => (this.#handleClick)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
     n_e1.push("\n    Clicked ");
     const f3 = (() => (this.#count)).bind(this);
-    const e4 = document.createTextNode(f3());
+    const e4 = newT(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     n_e1.push(e4);
     n_e1.push(" ");
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
-    const e6 = document.createTextNode(f5());
+    const e6 = newT(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     n_e1.push(e6);
     n_e1.push(" ");
@@ -65,19 +66,6 @@ if (this.#count >= 10) {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.zuiCreateHTMLElements(shadowRoot);
   }
-#subs = new Map();
-zuiSub(name, fn) {
-  let arr = this.#subs.get(name);
-  if (!arr)
-    arr = [fn];
-  else
-    arr.push(fn);
-  this.#subs.set(name, arr);
-}
-zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
-    fn();
-}
 
   static ZuiTagName = "zui-app_2f2g5e8mtx7qz39o5xu6057e592czmk5ad3fgmk3uodv6jsx2uwv1s3fsal";
 }

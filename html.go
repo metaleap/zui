@@ -244,15 +244,14 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				fn_name, span_var_name := me.nextFnName(), me.nextElName()
 				me.WriteString(pref + "const " + fn_name + " = " + me.jsFnCached("(() => ("+js_src+")).bind(this)", fn_name) + ";")
 				if part.jsExprAsHtml {
-					me.WriteString(pref + "const " + span_var_name + " = document.createElement('span');")
+					me.WriteString(pref + "const " + span_var_name + " = newE('span');")
 					me.WriteString(pref + span_var_name + ".innerHTML = " + fn_name + "();")
 				} else {
-					me.WriteString(pref + "const " + span_var_name + " = document.createTextNode(" + fn_name + "());")
+					me.WriteString(pref + "const " + span_var_name + " = newT(" + fn_name + "());")
 				}
 				for _, top_level_decl_name := range part.jsTopLevelRefs {
 					if !me.blockFnStackHasDep(top_level_decl_name) {
 						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
-						me.usedSubs = true
 					}
 				}
 				me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + span_var_name + ");")
@@ -275,9 +274,9 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 		if zui_rel_file_path == "" {
 			return errors.New(me.zuiFilePath + ": component '" + zui_tag_name + "' was not `import`ed")
 		}
-		me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + zui_tag_name + ".ZuiTagName);")
+		me.WriteString(pref + "const " + node_var_name + " = newE(" + zui_tag_name + ".ZuiTagName);")
 	} else {
-		me.WriteString(pref + "const " + node_var_name + " = document.createElement(" + strQ(curNode.Data) + ");")
+		me.WriteString(pref + "const " + node_var_name + " = newE(" + strQ(curNode.Data) + ");")
 	}
 	me.WriteString(pref + "const n_" + node_var_name + " = [];")
 
@@ -349,7 +348,7 @@ func (me *zui2js) htmlWalkElemNodeAndEmitJS(curNode *html.Node, parentNodeVarNam
 					for _, top_level_decl_name := range part.jsTopLevelRefs {
 						if !attr_decl_sub_done[top_level_decl_name] {
 							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
-							me.usedSubs, attr_decl_sub_done[top_level_decl_name] = true, true
+							attr_decl_sub_done[top_level_decl_name] = true
 						}
 					}
 				}

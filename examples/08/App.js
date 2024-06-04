@@ -1,13 +1,14 @@
 // Code generated from App.zui. DO NOT EDIT
 // Source file content hash: 1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6
 
-export class App extends HTMLElement {
+import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
+export class App extends ZuiElement {
 
 
   #v0 = 0;
   get #count() { return this.#v0; }
   set #count(v) {
-    if (((typeof this.#v0) === 'object') || ((typeof v) === 'object') || !Object.is(this.#v0, v)) {
+    if (!deepEq(this.#v0, v)) {
       this.#v0 = v;
       this.zuiOnPropChanged('count');
     }
@@ -25,33 +26,33 @@ export class App extends HTMLElement {
 
   zuiCreateHTMLElements(shadowRoot) {
     const n_shadowRoot = [];
-    const e1 = document.createElement("button");
+    const e1 = newE("button");
     const n_e1 = [];
     const f2 = (() => (this.#increment)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
     n_e1.push("\n    Clicked ");
     const f3 = (() => (this.#count)).bind(this);
-    const e4 = document.createTextNode(f3());
+    const e4 = newT(f3());
     this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
     n_e1.push(e4);
     n_e1.push(" ");
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
-    const e6 = document.createTextNode(f5());
+    const e6 = newT(f5());
     this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
     n_e1.push(e6);
     n_e1.push(" ");
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     n_shadowRoot.push(" ");
-    const e7 = document.createElement("p");
+    const e7 = newE("p");
     const n_e7 = [];
     const f8 = f3;
-    const e9 = document.createTextNode(f8());
+    const e9 = newT(f8());
     this.zuiSub('count', (() => { e9.nodeValue = f8(); }).bind(this));
     n_e7.push(e9);
     n_e7.push(" doubled is ");
     const f10 = (() => (this.#doubled)).bind(this);
-    const e11 = document.createTextNode(f10());
+    const e11 = newT(f10());
     this.zuiSub('doubled', (() => { e11.nodeValue = f10(); }).bind(this));
     n_e7.push(e11);
     e7.replaceChildren(...n_e7);
@@ -66,19 +67,6 @@ export class App extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.zuiCreateHTMLElements(shadowRoot);
   }
-#subs = new Map();
-zuiSub(name, fn) {
-  let arr = this.#subs.get(name);
-  if (!arr)
-    arr = [fn];
-  else
-    arr.push(fn);
-  this.#subs.set(name, arr);
-}
-zuiOnPropChanged(name) {
-  for (const fn of ((this.#subs.get(name)) ?? []))
-    fn();
-}
 
   static ZuiTagName = "zui-app_1yadqe61wprkz3qm01yq09jv9uhchrpn6j8vdb25w2bdsp7akhn1d1r9n6";
 }
