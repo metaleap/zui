@@ -86,9 +86,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 	switch part.jsBlockKind {
 
 	case BlockAwaitStart:
-		it := blockFnStackItem{kind: BlockIfStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
+		it := blockFnStackItem{kind: BlockIfStart, tmpTag: jsSrc, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
 		*parentNodeVarName = me.nextElName()
-		it.nameSelfParent, it.tmpTag = *parentNodeVarName, jsSrc
+		it.nameSelfParent = *parentNodeVarName
 		me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-wait');")
 		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
 		me.WriteString(pref + "const " + it.fnName + " = (async () => { //startWait")
