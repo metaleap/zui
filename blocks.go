@@ -59,6 +59,16 @@ func (me *zui2js) blocknessCheck(src string) (BlockKind, string, error) {
 		return BlockEachStart, src_js, nil
 	case strTrim(src) == "/each":
 		return BlockEachEnd, "", nil
+
+	case strings.HasPrefix(src, "#await "):
+		return BlockAwaitStart, src[len("#await "):], nil
+	case strings.HasPrefix(src, ":then "):
+		return BlockAwaitThen, src[len(":then "):], nil
+	case strings.HasPrefix(src, ":catch "):
+		return BlockAwaitCatch, src[len(":catch "):], nil
+	case strTrim(src) == "/await":
+		return BlockAwaitEnd, "", nil
+
 	}
 	return 0, "", errors.New(me.zuiFilePath + ": unrecognized block syntax in `{" + src + "}`")
 }
@@ -122,19 +132,23 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
 
 	case BlockEachStart: // {#each ...}
-		it := blockFnStackItem{kind: BlockEachStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
-		*parentNodeVarName = me.nextElName()
-		it.nameSelfParent = *parentNodeVarName
-		me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-loop');")
-		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
-		me.WriteString(pref + "const " + it.fnName + " = (() => { //startLoop")
-		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
 		names := strings.Split(jsSrc[:len(jsSrc)-1][1:], ",")
 		assert(len(names) == 4)
 		for i, name := range names {
 			names[i] = strTrim(name)
 		}
 		loop_arr, loop_item, loop_idx, loop_id := names[0], names[1], names[2], names[3]
+		it := blockFnStackItem{kind: BlockEachStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
+		*parentNodeVarName = me.nextElName()
+		it.nameSelfParent = *parentNodeVarName
+
+		me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-loop');")
+		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
+		if loop_id != "" {
+			// me.WriteString(pref + "const c_" + it.nameSelfParent + " = new Map();")
+		}
+		me.WriteString(pref + "const " + it.fnName + " = (() => { //startLoop")
+		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
 		if loop_idx != "null" {
 			me.WriteString(pref + "  let " + loop_idx + " = -1;")
 		}
@@ -142,12 +156,6 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		me.WriteString(pref + "  for (const " + loop_item + " of " + loop_arr + ") {")
 		if loop_idx != "null" {
 			me.WriteString(pref + "  " + loop_idx + "++;")
-		}
-		if loop_id != "null" {
-			// var_name_item := "it_" + names[1]
-			// me.WriteString(pref + "  const " + var_name_item + " = newE('zui-item');")
-			// me.WriteString(pref + "  " + var_name_item + ".setAttribute('item-id', " + expr_id + ");")
-			// me.WriteString(pref + "  const   n_" + var_name_item + " = [];")
 		}
 		me.blockFnStack = append(me.blockFnStack, &it)
 
@@ -174,6 +182,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 			}
 		}
 		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
+
+	default:
+		panic("TODO: " + itoa(int(part.jsBlockKind)))
 
 	}
 	return nil

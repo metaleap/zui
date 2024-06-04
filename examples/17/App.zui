@@ -17,6 +17,6 @@
 
 <button on:click={handleClick}> Remove first thing </button>
 
-{#each things as thing (thing.id)}
+{#each things as thing, i (thing.id)}
     <Thing name={thing.name} />
 {/each}

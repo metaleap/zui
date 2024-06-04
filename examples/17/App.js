@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 1m44rlry9mugrtfv2ndfzhyoe2fr84xz0x4ke03sngk578d3iqq1725kpj
+// Source file content hash: 272l38pq9pbcjceizydo1z7352dz7eoe2shspb57467zkschx81xch813
 
 import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
 export class App extends ZuiElement {
@@ -36,8 +36,10 @@ export class App extends ZuiElement {
     const e4 = newE('zui-loop');
     const n_e4 = [];
     const f3 = (() => { //startLoop
+      let i = -1;
       n_e4.splice(0);
       for (const thing of this.#things) {
+      i++;
     n_e4.push(newT(" "));
     const e5 = newE(Thing.ZuiTagName);
     const n_e5 = [];
@@ -68,7 +70,7 @@ export class App extends ZuiElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
 
-  static ZuiTagName = "zui-app_1m44rlry9mugrtfv2ndfzhyoe2fr84xz0x4ke03sngk578d3iqq1725kpj";
+  static ZuiTagName = "zui-app_272l38pq9pbcjceizydo1z7352dz7eoe2shspb57467zkschx81xch813";
 }
 import { Thing } from './Thing.js';
 customElements.define(App.ZuiTagName, App);
