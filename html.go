@@ -221,7 +221,7 @@ func (me *zui2js) nextElName() string { me.idxFn++; return "e" + itoa(me.idxFn) 
 func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html.Node, parentNodeVarName *string) error {
 	const pref = "\n    "
 	if parentNode.Type == html.ElementNode && parentNode.Data == "style" {
-		me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + strQ(curNode.Data) + ");")
+		me.WriteString(pref + "n_" + *parentNodeVarName + ".push(newT(" + strQ(curNode.Data) + "));")
 		return nil
 	}
 
@@ -232,7 +232,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 	for _, part := range parts {
 
 		if part.text != "" {
-			me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + ");")
+			me.WriteString(pref + "n_" + *parentNodeVarName + ".push(newT(" + strQ(ıf(htmlTextIsFullyWhitespace(part.text), " ", part.text)) + "));")
 
 		} else if part.jsExpr != nil {
 			js_src := strings.TrimSpace(strings.TrimSuffix(jsString(part.jsExpr), ";"))

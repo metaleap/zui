@@ -7,7 +7,7 @@ export class App extends ZuiElement {
     const n_shadowRoot = [];
     const e1 = newE("h1");
     const n_e1 = [];
-    n_e1.push("Welcome!");
+    n_e1.push(newT("Welcome!"));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

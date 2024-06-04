@@ -19,12 +19,12 @@ export class App extends ZuiElement {
     const n_shadowRoot = [];
     const e1 = newE("h1");
     const n_e1 = [];
-    n_e1.push("Hello ");
+    n_e1.push(newT("Hello "));
     const f2 = (() => (this.#greetName.toUpperCase())).bind(this);
     const e3 = newT(f2());
     this.zuiSub('greetName', (() => { e3.nodeValue = f2(); }).bind(this));
     n_e1.push(e3);
-    n_e1.push("!");
+    n_e1.push(newT("!"));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

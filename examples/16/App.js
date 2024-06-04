@@ -31,13 +31,13 @@ export class App extends ZuiElement {
     const f3 = (() => ("color: " +  (f2()) )).bind(this);
     e1.setAttribute("style",  f3());
     this.zuiSub('selected', () => e1.setAttribute("style",  f3()));
-    n_e1.push("Pick a colour");
+    n_e1.push(newT("Pick a colour"));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
-    n_shadowRoot.push(" ");
+    n_shadowRoot.push(newT(" "));
     const e4 = newE("div");
     const n_e4 = [];
-    n_e4.push(" ");
+    n_e4.push(newT(" "));
     const e6 = newE('zui-loop');
     const n_e6 = [];
     const f5 = (() => { //startLoop
@@ -45,7 +45,7 @@ export class App extends ZuiElement {
       n_e6.splice(0);
       for (const color of this.#colors) {
       i++;
-    n_e6.push(" ");
+    n_e6.push(newT(" "));
     const e7 = newE("button");
     const n_e7 = [];
     const f8 = (() => (this.#selected === color)).bind(this);
@@ -65,7 +65,7 @@ export class App extends ZuiElement {
     n_e7.push(e16);
     e7.replaceChildren(...n_e7);
     n_e6.push(e7);
-    n_e6.push(" ");
+    n_e6.push(newT(" "));
       }
       if (n_e6.length != e6.childNodes.length)
         e6.replaceChildren(...n_e6);
@@ -78,13 +78,13 @@ export class App extends ZuiElement {
     f5();
     this.zuiSub("colors", f5);
     n_e4.push(e6);
-    n_e4.push(" ");
+    n_e4.push(newT(" "));
     e4.replaceChildren(...n_e4);
     n_shadowRoot.push(e4);
-    n_shadowRoot.push(" ");
+    n_shadowRoot.push(newT(" "));
     const e17 = newE("style");
     const n_e17 = [];
-    n_e17.push("\n    h1 {\n        transition: color 0.2s;\n    }\n\n    div {\n        display: grid;\n        grid-template-columns: repeat(7, 1fr);\n        grid-gap: 5px;\n        max-width: 400px;\n    }\n\n    button {\n        aspect-ratio: 1;\n        border-radius: 50%;\n        background: var(--color, #fff);\n        transform: translate(-2px, -2px);\n        filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.5));\n        transition: all 0.1s;\n    }\n\n    button[aria-current=\"true\"] {\n        transform: none;\n        filter: none;\n        box-shadow: inset 3px 3px 4px rgba(0, 0, 0, 0.5);\n    }\n");
+    n_e17.push(newT("\n    h1 {\n        transition: color 0.2s;\n    }\n\n    div {\n        display: grid;\n        grid-template-columns: repeat(7, 1fr);\n        grid-gap: 5px;\n        max-width: 400px;\n    }\n\n    button {\n        aspect-ratio: 1;\n        border-radius: 50%;\n        background: var(--color, #fff);\n        transform: translate(-2px, -2px);\n        filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.5));\n        transition: all 0.1s;\n    }\n\n    button[aria-current=\"true\"] {\n        transform: none;\n        filter: none;\n        box-shadow: inset 3px 3px 4px rgba(0, 0, 0, 0.5);\n    }\n"));
     e17.replaceChildren(...n_e17);
     n_shadowRoot.push(e17);
     shadowRoot.replaceChildren(...n_shadowRoot);

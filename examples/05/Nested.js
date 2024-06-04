@@ -7,7 +7,7 @@ export class Nested extends ZuiElement {
     const n_shadowRoot = [];
     const e1 = newE("p");
     const n_e1 = [];
-    n_e1.push("This is another paragraph.");
+    n_e1.push(newT("This is another paragraph."));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

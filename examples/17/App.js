@@ -29,23 +29,23 @@ export class App extends ZuiElement {
     const n_e1 = [];
     const f2 = (() => (this.#handleClick)).bind(this);
     e1.addEventListener('click', ((evt) => (f2)().bind(this)()).bind(this));
-    n_e1.push(" Remove first thing ");
+    n_e1.push(newT(" Remove first thing "));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
-    n_shadowRoot.push(" ");
+    n_shadowRoot.push(newT(" "));
     const e4 = newE('zui-loop');
     const n_e4 = [];
     const f3 = (() => { //startLoop
       n_e4.splice(0);
       for (const thing of this.#things) {
-    n_e4.push(" ");
+    n_e4.push(newT(" "));
     const e5 = newE(Thing.ZuiTagName);
     const n_e5 = [];
     const f6 = (() => (thing.name)).bind(this);
     e5.setAttribute("name",  f6());
     e5.replaceChildren(...n_e5);
     n_e4.push(e5);
-    n_e4.push(" ");
+    n_e4.push(newT(" "));
       }
       if (n_e4.length != e4.childNodes.length)
         e4.replaceChildren(...n_e4);
