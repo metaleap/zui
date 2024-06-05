@@ -1,0 +1,15 @@
+<!--https://learn.svelte.dev/tutorial/dom-event-forwarding-->
+<script>
+    import BigRedButton from "./BigRedButton.zui";
+    import horn from "./vibes.mp3";
+
+    const audio = new Audio();
+    audio.src = horn;
+
+    function handleClick() {
+        audio.load();
+        audio.play();
+    }
+</script>
+
+<BigRedButton on:click={handleClick} />

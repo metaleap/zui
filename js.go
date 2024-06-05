@@ -2,7 +2,6 @@ package zui
 
 import (
 	"errors"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -188,15 +187,12 @@ func (me *jsWholeASTRewriter) gather(node js.INode) {
 			tail = strings.Trim(tail, "`")
 			switch string(tag.Data) {
 			case "zuiPath":
-				file_path_from_cur_dir_vantage := filepath.Join(filepath.Dir(me.state.zuiFilePath), tail)
-				file_exists_from_zui_file_vantage := FsIsFile(file_path_from_cur_dir_vantage)
-				if file_exists_from_zui_file_vantage {
+				file_path_from_cur_dir_vantage, err := me.state.fileRelPath(tail)
+				if me.err = err; err == nil {
 					me.rewrites[node] = &js.LiteralExpr{
 						TokenType: js.StringToken,
 						Data:      []byte("'" + file_path_from_cur_dir_vantage + "'"),
 					}
-				} else {
-					me.err = errors.New(me.state.zuiFilePath + ": the zuiPath '" + tail + "' does not exist")
 				}
 			}
 		}

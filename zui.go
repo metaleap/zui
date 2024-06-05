@@ -41,6 +41,7 @@ type zui2js struct {
 	// in-flight state
 
 	topLevelDecls         map[string]js.IExpr
+	topLevelStmts         []js.IStmt
 	topLevelReactiveDecls map[*js.LabelledStmt]js.IExpr
 	topLevelReactiveDeps  map[string][]string
 	topLevelReactiveStmts map[string][]string
@@ -155,6 +156,9 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 
 	me.WriteString(newline + "  constructor() {")
 	me.WriteString(newline + "    super();")
+	for _, stmt := range me.topLevelStmts {
+		me.WriteString(newline + "    " + jsString(stmt))
+	}
 	for _, name := range orderedMapKeys(me.topLevelReactiveDeps) {
 		for _, dep := range me.topLevelReactiveDeps[name] {
 			me.WriteString(newline + "    this.zuiSub('" + dep + "', () => this.zuiOnPropChanged('" + name + "'));")
@@ -184,8 +188,18 @@ func ToJS(zuiFilePath string, zuiFileSrc string, zuiFileHash string) (string, er
 	me.WriteString(newline + "}")
 	for _, zui_import_name := range orderedMapKeys(me.imports) {
 		zui_import_path := me.imports[zui_import_name]
-		zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
-		me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "';")
+		if filepath.Ext(zui_import_path) == ".zui" {
+			zui_import_path = FsPathSwapExt(zui_import_path, ".zui", ".js")
+		}
+		if filepath.Ext(zui_import_path) == ".js" {
+			me.WriteString(newline + "import { " + zui_import_name + " } from '" + zui_import_path + "';")
+		} else {
+			zui_import_path, err := me.fileRelPath(zui_import_path)
+			if err != nil {
+				return "", err
+			}
+			me.WriteString(newline + "const " + zui_import_name + " = " + strQ(zui_import_path) + ";")
+		}
 	}
 	me.WriteString(newline + "customElements.define(" + zui_class_name + ".ZuiTagName, " + zui_class_name + ");")
 
@@ -245,7 +259,7 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 			}
 
 		default:
-			return errors.New(me.zuiFilePath + ": unexpected at top-level: '" + jsString(stmt))
+			me.topLevelStmts = append(me.topLevelStmts, stmt)
 		}
 	}
 
@@ -262,6 +276,10 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 		}
 
 		switch stmt := stmt.(type) {
+		default:
+			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, jsString(stmt), stmt); err != nil {
+				return err
+			}
 		case *js.FuncDecl:
 			name_orig := stmt.Name.String()
 			if _, err = jsWalkAndRewriteTopLevelFuncAST(me, name_orig, &stmt.Body); err != nil {
@@ -315,4 +333,14 @@ func (me *zui2js) htmlWalkScriptTagAndEmitJS(scriptNodeText string) error {
 		}
 	}
 	return nil
+}
+
+func (me *zui2js) fileRelPath(filePath string) (string, error) {
+	file_path_from_cur_dir_vantage := filepath.Join(filepath.Dir(me.zuiFilePath), filePath)
+	file_exists_from_zui_file_vantage := FsIsFile(file_path_from_cur_dir_vantage)
+	if file_exists_from_zui_file_vantage {
+		return file_path_from_cur_dir_vantage, nil
+	} else {
+		return "", errors.New(me.zuiFilePath + ": the zuiPath '" + filePath + "' does not exist")
+	}
 }
