@@ -374,7 +374,11 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 				if len(parts) > 1 || (len(parts) > 0 && parts[0].jsExpr == nil) {
 					return errors.New(me.zuiFilePath + ": invalid directive attribute value in " + attr.Key + "='" + attr.Val + "'")
 				}
-				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name); err != nil {
+				var part *htmlTextAndExprsSplitItem
+				if len(parts) > 0 {
+					part = &parts[0]
+				}
+				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name, part); err != nil {
 					return err
 				}
 			} else {

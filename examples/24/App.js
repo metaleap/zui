@@ -1,5 +1,5 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: pzv9vqsd2nnq3hxbemtmv6zef2on8e3n4kajaeyiqhxpcpp1ie1bqc0wf
+// Source file content hash: 2ddb4una5u5xy23twc4cr476it2xq7mrmecn18t3h4cz3tln5ykd1342aah
 
 import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
 export class App extends ZuiElement {
@@ -14,11 +14,10 @@ export class App extends ZuiElement {
     }
   }
 
-  #handleClick() {
-    console.log("ploy");
+#handleClick() {
     this.#audio.load();
     this.#audio.play();
-  }
+}
 
 
 
@@ -41,7 +40,7 @@ export class App extends ZuiElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
 
-  static ZuiTagName = "zui-app_pzv9vqsd2nnq3hxbemtmv6zef2on8e3n4kajaeyiqhxpcpp1ie1bqc0wf";
+  static ZuiTagName = "zui-app_2ddb4una5u5xy23twc4cr476it2xq7mrmecn18t3h4cz3tln5ykd1342aah";
 }
 import { BigRedButton } from './BigRedButton.js';
 const horn = "24/vibes.mp3";

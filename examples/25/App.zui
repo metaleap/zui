@@ -1,0 +1,8 @@
+<!--https://learn.svelte.dev/tutorial/text-inputs-->
+<script>
+    let name = "world";
+</script>
+
+<input bind:value={name} />
+
+<h1>Hello {name}!</h1>

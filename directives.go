@@ -8,11 +8,12 @@ import (
 	"golang.org/x/net/html"
 )
 
-func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string, jsAttrValFnName string) error {
+func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string, jsAttrValFnName string, part *htmlTextAndExprsSplitItem) error {
 	const pref = "\n    "
 	attr_name := strTrim(attr.Key)
 	assert(attr_name != "")
 	switch {
+
 	case strings.HasPrefix(attr_name, "on:"):
 		parts := strings.Split(strTrim(attr_name[len("on:"):]), "|")
 		evt_name := strTrim(parts[0])
@@ -50,14 +51,18 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 			}
 			me.WriteString(pref + "  " + jsAttrValFnName + "().bind(this)(evt);")
 			me.WriteString(pref + "})).bind(this);")
-			if slices.Contains(evt_mods, "once") {
-			}
 			jsAttrValFnName = name_fn
 		}
-
 		me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => (" + jsAttrValFnName + ")().bind(this)(evt)).bind(this)" +
-			ıf(!slices.Contains(evt_mods, "capture"), "", ", { capture: true }") +
-			");")
+			ıf(!slices.Contains(evt_mods, "capture"), "", ", { capture: true }") + ");")
+
+	case strings.HasPrefix(attr_name, "bind:"):
+		if part == nil || part.jsExpr == nil {
+			return errors.New(me.zuiFilePath + ": invalid 'bind' argument `" + attr.Val + "`")
+		}
+		js_expr_frag := strings.TrimSuffix(jsString(part.jsExpr), ";")
+		println(">>>>>>>>>" + js_expr_frag + "<<<<<<<<<")
+
 	default:
 		return errors.New(me.zuiFilePath + ": unknown directive '" + attr_name + "'")
 	}
