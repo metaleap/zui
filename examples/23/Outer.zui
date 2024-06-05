@@ -1,0 +1,5 @@
+<script>
+    import Inner from "./Inner.zui";
+</script>
+
+<Inner on:message />

@@ -1,3 +1,4 @@
+<!--https://learn.svelte.dev/tutorial/component-events-->
 <script>
     import Inner from "./Inner.zui";
 

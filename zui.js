@@ -55,9 +55,8 @@ export class ZuiElement extends HTMLElement {
     dispatch(eventName, details) {
         this.dispatchEvent(new CustomEvent(eventName, {
             detail: details,
-            composed: true,
-            bubbles: true,
-
+            composed: false,
+            bubbles: false,
         }));
     }
 

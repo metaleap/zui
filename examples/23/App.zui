@@ -1,0 +1,10 @@
+<!--https://learn.svelte.dev/tutorial/event-forwarding-->
+<script>
+    import Outer from "./Outer.zui";
+
+    function handleMessage(event) {
+        alert(event.detail.text);
+    }
+</script>
+
+<Outer on:message={handleMessage} />

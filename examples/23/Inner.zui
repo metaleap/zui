@@ -1,0 +1,9 @@
+<script>
+    function sayHello() {
+        this.dispatch("message", {
+            text: "Hello!",
+        });
+    }
+</script>
+
+<button on:click={sayHello}> 23 Click to say hello </button>

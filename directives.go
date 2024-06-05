@@ -19,7 +19,13 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 		if evt_name == "" {
 			return errors.New(me.zuiFilePath + ": event name missing after `on:`")
 		}
-		evt_mods := parts[1:]
+		evt_fwd, evt_mods := (jsAttrValFnName == ""), parts[1:]
+		if evt_fwd {
+			jsAttrValFnName = me.nextFnName()
+			me.WriteString(pref + "const " + jsAttrValFnName + " = (() => ((evt) => {")
+			me.WriteString(pref + "  this.dispatch('" + evt_name + "', evt.detail);")
+			me.WriteString(pref + "}));")
+		}
 		if len(evt_mods) > 0 {
 			evt_once := slices.Contains(evt_mods, "once")
 			evt_prevdef := slices.Contains(evt_mods, "preventDefault")
