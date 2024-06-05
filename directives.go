@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string, jsAttrValFnName string, jsPart *htmlTextAndExprsSplitItem) (addAttrs []html.Attribute, err error) {
+func (me *zui2js) doDirectiveAttr(attr *html.Attribute, node *html.Node, jsVarNameCurNode string, jsAttrValFnName string, jsPart *htmlTextAndExprsSplitItem) (addAttrs []html.Attribute, err error) {
 	const pref = "\n    "
 	attr_name := strTrim(attr.Key)
 	assert(attr_name != "")
@@ -34,7 +34,7 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 				me.WriteString(pref + "  if (!evt.isTrusted) { return; }")
 			}
 			if slices.Contains(evt_mods, "self") {
-				me.WriteString(pref + "  if (!evt.target !== this) { return; }")
+				me.WriteString(pref + "  if (evt.target !== this) { return; }")
 			}
 			if slices.Contains(evt_mods, "preventDefault") {
 				me.WriteString(pref + "  evt.preventDefault();")
@@ -65,7 +65,16 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 		switch prop_name {
 		case "value":
 			evt_name = "input"
-			me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => { " + js_expr_frag + " = " + jsVarNameCurNode + "." + prop_name + "; }).bind(this));")
+			is_numeric := (node != nil && slices.Contains([]string{"number", "range"}, htmlAttr(node, "type")))
+			js_prop_expr := jsVarNameCurNode + "." + prop_name
+			if is_numeric {
+				name_parse_fn := "parseInt"
+				if strings.Contains(htmlAttr(node, "value"), ".") || strings.Contains(htmlAttr(node, "min"), ".") || strings.Contains(htmlAttr(node, "max"), ".") || strings.Contains(htmlAttr(node, "step"), ".") {
+					name_parse_fn = "parseFloat"
+				}
+				js_prop_expr = name_parse_fn + "(" + js_prop_expr + ")"
+			}
+			me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => { " + js_expr_frag + " = " + js_prop_expr + "; }).bind(this));")
 			addAttrs = append(addAttrs, html.Attribute{Key: prop_name, Val: attr.Val})
 		default:
 			panic("TODO: implement event-handling for capturing '" + prop_name + "' changes")
