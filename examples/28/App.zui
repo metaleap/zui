@@ -1,4 +1,5 @@
 <!--https://learn.svelte.dev/tutorial/select-bindings-->
+<!--TODO: still semi-broken https://github.com/sveltejs/svelte/discussions/11919 -->
 <script>
     let questions = [
         {
