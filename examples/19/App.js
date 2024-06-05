@@ -41,7 +41,7 @@ export class App extends ZuiElement {
     n_e1.push(e3);
     const f4 = (() => (this.#m.x)).bind(this);
     const e5 = newT(f4());
-    this.zuiSub('m', (() => { e5.nodeValue = f4(); }).bind(this));
+    this.zuiSub('m', (() => { e5.nodeValue = f4(); }));
     n_e1.push(e5);
     n_e1.push(newT(" "));
     const e6 = newE("b");
@@ -51,7 +51,7 @@ export class App extends ZuiElement {
     n_e1.push(e6);
     const f7 = (() => (this.#m.y)).bind(this);
     const e8 = newT(f7());
-    this.zuiSub('m', (() => { e8.nodeValue = f7(); }).bind(this));
+    this.zuiSub('m', (() => { e8.nodeValue = f7(); }));
     n_e1.push(e8);
     n_e1.push(newT(" "));
     e1.replaceChildren(...n_e1);

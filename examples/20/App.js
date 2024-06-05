@@ -26,12 +26,12 @@ export class App extends ZuiElement {
     n_e1.push(newT("\n    The pointer is at "));
     const f3 = (() => (this.#m.x)).bind(this);
     const e4 = newT(f3());
-    this.zuiSub('m', (() => { e4.nodeValue = f3(); }).bind(this));
+    this.zuiSub('m', (() => { e4.nodeValue = f3(); }));
     n_e1.push(e4);
     n_e1.push(newT(" x "));
     const f5 = (() => (this.#m.y)).bind(this);
     const e6 = newT(f5());
-    this.zuiSub('m', (() => { e6.nodeValue = f5(); }).bind(this));
+    this.zuiSub('m', (() => { e6.nodeValue = f5(); }));
     n_e1.push(e6);
     n_e1.push(newT(" "));
     e1.replaceChildren(...n_e1);

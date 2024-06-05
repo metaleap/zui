@@ -4,6 +4,8 @@ import (
 	"errors"
 	"slices"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 type BlockKind int
@@ -80,7 +82,7 @@ func (me *zui2js) blockFnStackHasDep(dep string) bool {
 	})
 }
 
-func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitItem, parentNodeVarName *string) error {
+func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitItem, parentNode *html.Node, parentNodeVarName *string) error {
 	const pref = "\n    "
 
 	switch part.jsBlockKind {
@@ -185,15 +187,17 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 		for i, name := range names {
 			names[i] = strTrim(name)
 		}
-		loop_arr, loop_item, loop_idx, loop_id := names[0], names[1], names[2], names[3]
+		loop_arr, loop_item, loop_idx, _ /* loop_id */ := names[0], names[1], names[2], names[3]
+		has_own_elem := (1 != htmlNumTagNodes(parentNode))
 		it := blockFnStackItem{kind: BlockEachStart, fnName: me.nextFnName(), namePrevParent: *parentNodeVarName, deps: part.jsTopLevelRefs}
-		*parentNodeVarName = me.nextElName()
-		it.nameSelfParent = *parentNodeVarName
 
-		me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-loop');")
-		me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
-		if loop_id != "" {
-			// me.WriteString(pref + "const c_" + it.nameSelfParent + " = new Map();")
+		if !has_own_elem {
+			it.nameSelfParent = *parentNodeVarName
+		} else {
+			*parentNodeVarName = me.nextElName()
+			it.nameSelfParent = *parentNodeVarName
+			me.WriteString(pref + "const " + it.nameSelfParent + " = newE('zui-loop');")
+			me.WriteString(pref + "const n_" + it.nameSelfParent + " = [];")
 		}
 		me.WriteString(pref + "const " + it.fnName + " = (() => { //startLoop")
 		assert(jsSrc[0] == '[' && jsSrc[len(jsSrc)-1] == ']')
@@ -229,7 +233,9 @@ func (me *zui2js) blockFragmentEmitJS(jsSrc string, part *htmlTextAndExprsSplitI
 				me.WriteString(pref + "this.zuiSub(" + strQ(dep) + ", " + it.fnName + ");")
 			}
 		}
-		me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
+		if it.namePrevParent != it.nameSelfParent {
+			me.WriteString(pref + "n_" + it.namePrevParent + ".push(" + it.nameSelfParent + ");")
+		}
 
 	default:
 		panic("TODO: " + itoa(int(part.jsBlockKind)))

@@ -24,8 +24,8 @@ export class App extends ZuiElement {
     e1.addEventListener('input', f3);
     e1.addEventListener('change', f3);
     const f4 = f2;
-    e1.setAttribute("value",  f4());
-    this.zuiSub('name', () => e1.setAttribute("value",  f4()));
+    this.zuiSet(e1, "value",  f4());
+    this.zuiSub('name', () => this.zuiSet(e1, "value",  f4()));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     n_shadowRoot.push(newT(" "));
@@ -34,7 +34,7 @@ export class App extends ZuiElement {
     n_e6.push(newT("Hello "));
     const f7 = f2;
     const e8 = newT(f7());
-    this.zuiSub('name', (() => { e8.nodeValue = f7(); }).bind(this));
+    this.zuiSub('name', (() => { e8.nodeValue = f7(); }));
     n_e6.push(e8);
     n_e6.push(newT("!"));
     e6.replaceChildren(...n_e6);

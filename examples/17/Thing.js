@@ -37,12 +37,12 @@ export class Thing extends ZuiElement {
     const n_e1 = [];
     const f2 = (() => (this.#emoji)).bind(this);
     const e3 = newT(f2());
-    this.zuiSub('emoji', (() => { e3.nodeValue = f2(); }).bind(this));
+    this.zuiSub('emoji', (() => { e3.nodeValue = f2(); }));
     n_e1.push(e3);
     n_e1.push(newT(" = "));
     const f4 = (() => (this.name)).bind(this);
     const e5 = newT(f4());
-    this.zuiSub('name', (() => { e5.nodeValue = f4(); }).bind(this));
+    this.zuiSub('name', (() => { e5.nodeValue = f4(); }));
     n_e1.push(e5);
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

@@ -29,12 +29,12 @@ export class App extends ZuiElement {
     n_e1.push(newT("\n    Clicked "));
     const f3 = (() => (this.#count)).bind(this);
     const e4 = newT(f3());
-    this.zuiSub('count', (() => { e4.nodeValue = f3(); }).bind(this));
+    this.zuiSub('count', (() => { e4.nodeValue = f3(); }));
     n_e1.push(e4);
     n_e1.push(newT(" "));
     const f5 = (() => (this.#count === 1 ? "time" : "times")).bind(this);
     const e6 = newT(f5());
-    this.zuiSub('count', (() => { e6.nodeValue = f5(); }).bind(this));
+    this.zuiSub('count', (() => { e6.nodeValue = f5(); }));
     n_e1.push(e6);
     n_e1.push(newT(" "));
     e1.replaceChildren(...n_e1);

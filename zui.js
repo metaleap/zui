@@ -57,15 +57,22 @@ export class ZuiElement extends HTMLElement {
             detail: details,
             composed: false,
             bubbles: false,
-        }));
+        }))
+    }
+
+    zuiSet(elem, name, val) {
+        if (name in elem)
+            elem[name] = val
+        else
+            elem.setAttribute(name, val)
     }
 
     zuiSub(name, fn) {
         let arr = this.#subs.get(name)
         if (!arr)
-            arr = [fn]
+            arr = [fn.bind(this)]
         else
-            arr.push(fn)
+            arr.push(fn.bind(this))
         this.#subs.set(name, arr)
     }
 

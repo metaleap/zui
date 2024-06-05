@@ -41,7 +41,7 @@ export class App extends ZuiElement {
     const e5 = newE(Thing.ZuiTagName);
     const n_e5 = [];
     const f6 = (() => (thing.name)).bind(this);
-    e5.setAttribute("name",  f6());
+    this.zuiSet(e5, "name",  f6());
     e5.replaceChildren(...n_e5);
     n_e4.push(e5);
     n_e4.push(newT(" "));

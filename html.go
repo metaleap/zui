@@ -20,6 +20,9 @@ var (
 )
 
 func htmlSrc(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
 	switch node.Type {
 	case html.TextNode:
 		return node.Data
@@ -60,6 +63,17 @@ func htmlTextIsFullyWhitespace(s string) bool {
 		}
 	}
 	return true
+}
+
+func htmlNumTagNodes(parentNode *html.Node) (n int) {
+	if parentNode != nil {
+		for node := parentNode.FirstChild; node != nil; node = node.NextSibling {
+			if node.Type == html.ElementNode && node.Data != "" {
+				n++
+			}
+		}
+	}
+	return
 }
 
 func htmlReplaceNode(parentNode *html.Node, oldChildNode *html.Node, newChildNodes ...*html.Node) {
@@ -285,7 +299,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 		} else if part.jsExpr != nil {
 			js_src := strings.TrimSpace(strings.TrimSuffix(jsString(part.jsExpr), ";"))
 			if part.jsBlockKind != 0 {
-				if err = me.blockFragmentEmitJS(js_src, &part, parentNodeVarName); err != nil {
+				if err = me.blockFragmentEmitJS(js_src, &part, parentNode, parentNodeVarName); err != nil {
 					return err
 				}
 			} else {
@@ -299,7 +313,7 @@ func (me *zui2js) htmlWalkTextNodeAndEmitJS(curNode *html.Node, parentNode *html
 				}
 				for _, top_level_decl_name := range part.jsTopLevelRefs {
 					if !me.blockFnStackHasDep(top_level_decl_name) {
-						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }).bind(this));")
+						me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', (() => { " + span_var_name + "." + ıf(part.jsExprAsHtml, "innerHTML", "nodeValue") + " = " + fn_name + "(); }));")
 					}
 				}
 				me.WriteString(pref + "n_" + *parentNodeVarName + ".push(" + span_var_name + ");")
@@ -347,7 +361,7 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 		if spread != "" {
 			ref := "this." + ıf(slices.Contains(me.attrExports, spread), "", "#") + spread
 			me.WriteString(pref + "for (const prop in " + ref + ") {")
-			me.WriteString(pref + "  " + node_var_name + ".setAttribute(prop, " + ref + "[prop]);")
+			me.WriteString(pref + "  this.zuiSet(" + node_var_name + ", prop, " + ref + "[prop]);")
 			me.WriteString(pref + "}")
 		} else {
 			parts, err := me.htmlSplitTextAndJSExprs(attr.Val)
@@ -391,7 +405,7 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 				} else {
 					me.WriteString(pref + "const " + fn_name_attr + " = " + me.jsFnCached("(() => ("+attr_val_js_expr+")).bind(this)", fn_name_attr) + ";")
 				}
-				me.WriteString(pref + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "());")
+				me.WriteString(pref + "this.zuiSet(" + node_var_name + ", " + strQ(attr.Key) + ",  " + fn_name_attr + "());")
 				attr_decl_sub_done := map[string]bool{}
 				for _, it := range me.blockFnStack {
 					for _, dep := range it.deps {
@@ -401,7 +415,7 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 				for _, part := range parts {
 					for _, top_level_decl_name := range part.jsTopLevelRefs {
 						if !attr_decl_sub_done[top_level_decl_name] {
-							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + node_var_name + ".setAttribute(" + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
+							me.WriteString(pref + "this.zuiSub('" + top_level_decl_name + "', () => " + "this.zuiSet(" + node_var_name + ", " + strQ(attr.Key) + ",  " + fn_name_attr + "()));")
 							attr_decl_sub_done[top_level_decl_name] = true
 						}
 					}

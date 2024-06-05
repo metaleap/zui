@@ -22,7 +22,7 @@ export class App extends ZuiElement {
     n_e1.push(newT("Hello "));
     const f2 = (() => (this.#greetName.toUpperCase())).bind(this);
     const e3 = newT(f2());
-    this.zuiSub('greetName', (() => { e3.nodeValue = f2(); }).bind(this));
+    this.zuiSub('greetName', (() => { e3.nodeValue = f2(); }));
     n_e1.push(e3);
     n_e1.push(newT("!"));
     e1.replaceChildren(...n_e1);

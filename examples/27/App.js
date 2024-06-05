@@ -23,14 +23,14 @@ export class App extends ZuiElement {
     const e2 = newE("input");
     const n_e2 = [];
     const f3 = (() => ("checkbox")).bind(this);
-    e2.setAttribute("type",  f3());
+    this.zuiSet(e2, "type",  f3());
     const f4 = (() => (this.#yes)).bind(this);
     const f5 = ((evt) => { this.#yes = e2.checked; }).bind(this);
     e2.addEventListener('input', f5);
     e2.addEventListener('change', f5);
     const f6 = f4;
-    e2.setAttribute("checked",  f6());
-    this.zuiSub('yes', () => e2.setAttribute("checked",  f6()));
+    this.zuiSet(e2, "checked",  f6());
+    this.zuiSub('yes', () => this.zuiSet(e2, "checked",  f6()));
     e2.replaceChildren(...n_e2);
     n_e1.push(e2);
     n_e1.push(newT("\n    Yes! Send me regular email spam\n"));
@@ -67,8 +67,8 @@ export class App extends ZuiElement {
     const e12 = newE("button");
     const n_e12 = [];
     const f13 = (() => (!this.#yes)).bind(this);
-    e12.setAttribute("disabled",  f13());
-    this.zuiSub('yes', () => e12.setAttribute("disabled",  f13()));
+    this.zuiSet(e12, "disabled",  f13());
+    this.zuiSub('yes', () => this.zuiSet(e12, "disabled",  f13()));
     n_e12.push(newT("Subscribe"));
     e12.replaceChildren(...n_e12);
     n_shadowRoot.push(e12);

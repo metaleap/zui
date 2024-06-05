@@ -12,7 +12,7 @@ export class App extends ZuiElement {
     const e1 = newE(Nested.ZuiTagName);
     const n_e1 = [];
     const f2 = (() => (42)).bind(this);
-    e1.setAttribute("answer",  f2());
+    this.zuiSet(e1, "answer",  f2());
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

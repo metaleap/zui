@@ -22,7 +22,7 @@ export class Nested extends ZuiElement {
     n_e1.push(newT("The answer is "));
     const f2 = (() => (this.answer)).bind(this);
     const e3 = newT(f2());
-    this.zuiSub('answer', (() => { e3.nodeValue = f2(); }).bind(this));
+    this.zuiSub('answer', (() => { e3.nodeValue = f2(); }));
     n_e1.push(e3);
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

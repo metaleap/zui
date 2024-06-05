@@ -20,10 +20,10 @@ export class App extends ZuiElement {
     const e1 = newE("img");
     const n_e1 = [];
     const f2 = (() => ("Rick")).bind(this);
-    e1.setAttribute("alt",  f2());
+    this.zuiSet(e1, "alt",  f2());
     const f3 = (() => (this.#src)).bind(this);
-    e1.setAttribute("src",  f3());
-    this.zuiSub('src', () => e1.setAttribute("src",  f3()));
+    this.zuiSet(e1, "src",  f3());
+    this.zuiSub('src', () => this.zuiSet(e1, "src",  f3()));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

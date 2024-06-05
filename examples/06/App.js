@@ -22,7 +22,7 @@ export class App extends ZuiElement {
     const f2 = (() => (this.#string)).bind(this);
     const e3 = newE('span');
     e3.innerHTML = f2();
-    this.zuiSub('string', (() => { e3.innerHTML = f2(); }).bind(this));
+    this.zuiSub('string', (() => { e3.innerHTML = f2(); }));
     n_e1.push(e3);
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

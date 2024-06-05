@@ -63,79 +63,76 @@ export class App extends ZuiElement {
 })).bind(this);
     e5.addEventListener('change', ((evt) => (f8)().bind(this)(evt)).bind(this), {});
     const f9 = f6;
-    e5.setAttribute("value",  f9());
-    this.zuiSub('selected', () => e5.setAttribute("value",  f9()));
+    this.zuiSet(e5, "value",  f9());
+    this.zuiSub('selected', () => this.zuiSet(e5, "value",  f9()));
     n_e5.push(newT(" "));
-    const e12 = newE('zui-loop');
-    const n_e12 = [];
     const f11 = (() => { //startLoop
-      n_e12.splice(0);
+      n_e5.splice(0);
       for (const question of this.#questions) {
+    n_e5.push(newT(" "));
+    const e12 = newE("option");
+    const n_e12 = [];
+    const f13 = (() => (question)).bind(this);
+    this.zuiSet(e12, "value",  f13());
     n_e12.push(newT(" "));
-    const e13 = newE("option");
-    const n_e13 = [];
-    const f14 = (() => (question)).bind(this);
-    e13.setAttribute("value",  f14());
-    n_e13.push(newT(" "));
-    const f16 = (() => (question.text)).bind(this);
-    const e17 = newT(f16());
-    n_e13.push(e17);
-    n_e13.push(newT(" "));
-    e13.replaceChildren(...n_e13);
-    n_e12.push(e13);
+    const f15 = (() => (question.text)).bind(this);
+    const e16 = newT(f15());
+    n_e12.push(e16);
     n_e12.push(newT(" "));
+    e12.replaceChildren(...n_e12);
+    n_e5.push(e12);
+    n_e5.push(newT(" "));
       }
-      if (n_e12.length != e12.childNodes.length)
-        e12.replaceChildren(...n_e12);
+      if (n_e5.length != e5.childNodes.length)
+        e5.replaceChildren(...n_e5);
       else
-        for (let i = 0; i < n_e12.length; i++) {
-          if (!n_e12[i].isEqualNode(e12.childNodes[i]))
-            e12.replaceChild(n_e12[i], e12.childNodes[i]);
+        for (let i = 0; i < n_e5.length; i++) {
+          if (!n_e5[i].isEqualNode(e5.childNodes[i]))
+            e5.replaceChild(n_e5[i], e5.childNodes[i]);
         }
     }).bind(this); //endLoop
     f11();
     this.zuiSub("questions", f11);
-    n_e5.push(e12);
     n_e5.push(newT(" "));
     e5.replaceChildren(...n_e5);
     n_e2.push(e5);
     n_e2.push(newT(" "));
-    const e18 = newE("input");
-    const n_e18 = [];
-    const f19 = (() => (this.#answer)).bind(this);
-    const f20 = ((evt) => { this.#answer = e18.value; }).bind(this);
-    e18.addEventListener('input', f20);
-    e18.addEventListener('change', f20);
-    const f21 = f19;
-    e18.setAttribute("value",  f21());
-    this.zuiSub('answer', () => e18.setAttribute("value",  f21()));
-    e18.replaceChildren(...n_e18);
-    n_e2.push(e18);
+    const e17 = newE("input");
+    const n_e17 = [];
+    const f18 = (() => (this.#answer)).bind(this);
+    const f19 = ((evt) => { this.#answer = e17.value; }).bind(this);
+    e17.addEventListener('input', f19);
+    e17.addEventListener('change', f19);
+    const f20 = f18;
+    this.zuiSet(e17, "value",  f20());
+    this.zuiSub('answer', () => this.zuiSet(e17, "value",  f20()));
+    e17.replaceChildren(...n_e17);
+    n_e2.push(e17);
     n_e2.push(newT(" "));
-    const e23 = newE("button");
-    const n_e23 = [];
-    const f24 = (() => (!this.#answer)).bind(this);
-    e23.setAttribute("disabled",  f24());
-    this.zuiSub('answer', () => e23.setAttribute("disabled",  f24()));
-    const f26 = (() => ("submit")).bind(this);
-    e23.setAttribute("type",  f26());
-    n_e23.push(newT(" Submit "));
-    e23.replaceChildren(...n_e23);
-    n_e2.push(e23);
+    const e22 = newE("button");
+    const n_e22 = [];
+    const f23 = (() => (!this.#answer)).bind(this);
+    this.zuiSet(e22, "disabled",  f23());
+    this.zuiSub('answer', () => this.zuiSet(e22, "disabled",  f23()));
+    const f25 = (() => ("submit")).bind(this);
+    this.zuiSet(e22, "type",  f25());
+    n_e22.push(newT(" Submit "));
+    e22.replaceChildren(...n_e22);
+    n_e2.push(e22);
     n_e2.push(newT(" "));
     e2.replaceChildren(...n_e2);
     n_shadowRoot.push(e2);
     n_shadowRoot.push(newT(" "));
-    const e27 = newE("p");
-    const n_e27 = [];
-    n_e27.push(newT("\n    selected question "));
-    const f28 = (() => (this.#selected ? this.#selected.id : "[waiting...]")).bind(this);
-    const e29 = newT(f28());
-    this.zuiSub('selected', (() => { e29.nodeValue = f28(); }).bind(this));
-    n_e27.push(e29);
-    n_e27.push(newT(" "));
-    e27.replaceChildren(...n_e27);
-    n_shadowRoot.push(e27);
+    const e26 = newE("p");
+    const n_e26 = [];
+    n_e26.push(newT("\n    selected question "));
+    const f27 = (() => (this.#selected ? this.#selected.id : "[waiting...]")).bind(this);
+    const e28 = newT(f27());
+    this.zuiSub('selected', (() => { e28.nodeValue = f27(); }));
+    n_e26.push(e28);
+    n_e26.push(newT(" "));
+    e26.replaceChildren(...n_e26);
+    n_shadowRoot.push(e26);
     shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {

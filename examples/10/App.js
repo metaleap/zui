@@ -32,12 +32,12 @@ export class App extends ZuiElement {
     const n_e1 = [];
     const f2 = (() => (this.#numbers.join(" + "))).bind(this);
     const e3 = newT(f2());
-    this.zuiSub('numbers', (() => { e3.nodeValue = f2(); }).bind(this));
+    this.zuiSub('numbers', (() => { e3.nodeValue = f2(); }));
     n_e1.push(e3);
     n_e1.push(newT(" = "));
     const f4 = (() => (this.#sum)).bind(this);
     const e5 = newT(f4());
-    this.zuiSub('sum', (() => { e5.nodeValue = f4(); }).bind(this));
+    this.zuiSub('sum', (() => { e5.nodeValue = f4(); }));
     n_e1.push(e5);
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

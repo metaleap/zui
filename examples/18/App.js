@@ -75,7 +75,7 @@ export class App extends ZuiElement {
     const e9 = newE("p");
     const n_e9 = [];
     const f10 = (() => ("color: red")).bind(this);
-    e9.setAttribute("style",  f10());
+    this.zuiSet(e9, "style",  f10());
     const f11 = (() => (error.message)).bind(this);
     const e12 = newT(f11());
     n_e9.push(e12);

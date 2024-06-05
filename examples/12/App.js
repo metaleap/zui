@@ -20,7 +20,7 @@ export class App extends ZuiElement {
     const e1 = newE(PackageInfo.ZuiTagName);
     const n_e1 = [];
     for (const prop in this.#pkg) {
-      e1.setAttribute(prop, this.#pkg[prop]);
+      this.zuiSet(e1, prop, this.#pkg[prop]);
     }
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
