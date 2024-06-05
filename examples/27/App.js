@@ -25,51 +25,53 @@ export class App extends ZuiElement {
     const f3 = (() => ("checkbox")).bind(this);
     e2.setAttribute("type",  f3());
     const f4 = (() => (this.#yes)).bind(this);
-    e2.addEventListener('input', ((evt) => { this.#yes = e2.checked; }).bind(this));
-    const f5 = f4;
-    e2.setAttribute("checked",  f5());
-    this.zuiSub('yes', () => e2.setAttribute("checked",  f5()));
+    const f5 = ((evt) => { this.#yes = e2.checked; }).bind(this);
+    e2.addEventListener('input', f5);
+    e2.addEventListener('change', f5);
+    const f6 = f4;
+    e2.setAttribute("checked",  f6());
+    this.zuiSub('yes', () => e2.setAttribute("checked",  f6()));
     e2.replaceChildren(...n_e2);
     n_e1.push(e2);
     n_e1.push(newT("\n    Yes! Send me regular email spam\n"));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     n_shadowRoot.push(newT(" "));
-    const e8 = newE('zui-cond');
-    const n_e8 = [];
-    const f7 = (() => { //startCond
-      if (this.#yes) {
-    n_e8.push(newT(" "));
-    const e9 = newE("p");
+    const e9 = newE('zui-cond');
     const n_e9 = [];
-    n_e9.push(newT("Thank you. We will bombard your inbox and sell your personal details."));
-    e9.replaceChildren(...n_e9);
-    n_e8.push(e9);
-    n_e8.push(newT(" "));
-      } else {
-    n_e8.push(newT(" "));
+    const f8 = (() => { //startCond
+      if (this.#yes) {
+    n_e9.push(newT(" "));
     const e10 = newE("p");
     const n_e10 = [];
-    n_e10.push(newT("You must opt in to continue. If you're not paying, you're the product."));
+    n_e10.push(newT("Thank you. We will bombard your inbox and sell your personal details."));
     e10.replaceChildren(...n_e10);
-    n_e8.push(e10);
-    n_e8.push(newT(" "));
-      }
-      e8.replaceChildren(...n_e8);
-      n_e8.splice(0);
-    }).bind(this); //endCond
-    f7();
-    this.zuiSub("yes", f7);
-    n_shadowRoot.push(e8);
-    n_shadowRoot.push(newT(" "));
-    const e11 = newE("button");
+    n_e9.push(e10);
+    n_e9.push(newT(" "));
+      } else {
+    n_e9.push(newT(" "));
+    const e11 = newE("p");
     const n_e11 = [];
-    const f12 = (() => (!this.#yes)).bind(this);
-    e11.setAttribute("disabled",  f12());
-    this.zuiSub('yes', () => e11.setAttribute("disabled",  f12()));
-    n_e11.push(newT("Subscribe"));
+    n_e11.push(newT("You must opt in to continue. If you're not paying, you're the product."));
     e11.replaceChildren(...n_e11);
-    n_shadowRoot.push(e11);
+    n_e9.push(e11);
+    n_e9.push(newT(" "));
+      }
+      e9.replaceChildren(...n_e9);
+      n_e9.splice(0);
+    }).bind(this); //endCond
+    f8();
+    this.zuiSub("yes", f8);
+    n_shadowRoot.push(e9);
+    n_shadowRoot.push(newT(" "));
+    const e12 = newE("button");
+    const n_e12 = [];
+    const f13 = (() => (!this.#yes)).bind(this);
+    e12.setAttribute("disabled",  f13());
+    this.zuiSub('yes', () => e12.setAttribute("disabled",  f13()));
+    n_e12.push(newT("Subscribe"));
+    e12.replaceChildren(...n_e12);
+    n_shadowRoot.push(e12);
     shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {

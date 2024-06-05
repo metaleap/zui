@@ -61,10 +61,10 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, node *html.Node, jsVarNa
 		}
 		js_expr_frag := strings.TrimSuffix(jsString(jsPart.jsExpr), ";")
 		prop_name := strTrim(attr_name[len("bind:"):])
-		var evt_name string
+		var evt_names []string
 		switch prop_name {
 		case "value", "checked":
-			evt_name = "input"
+			evt_names = []string{"input", "change"}
 			is_num := (node != nil && slices.Contains([]string{"number", "range"}, htmlAttr(node, "type")))
 			js_prop_expr := jsVarNameCurNode + "." + prop_name
 			if is_num {
@@ -74,7 +74,11 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, node *html.Node, jsVarNa
 				}
 				js_prop_expr = name_parse_fn + "(" + js_prop_expr + ")"
 			}
-			me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => { " + js_expr_frag + " = " + js_prop_expr + "; }).bind(this));")
+			var_name_fn := me.nextFnName()
+			me.WriteString(pref + "const " + var_name_fn + " = " + me.jsFnCached("((evt) => { "+js_expr_frag+" = "+js_prop_expr+"; }).bind(this)", var_name_fn) + ";")
+			for _, evt_name := range evt_names {
+				me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', " + var_name_fn + ");")
+			}
 			addAttrs = append(addAttrs, html.Attribute{Key: prop_name, Val: attr.Val})
 		default:
 			panic("TODO: implement event-handling for capturing '" + prop_name + "' changes")
