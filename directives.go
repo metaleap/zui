@@ -63,11 +63,11 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, node *html.Node, jsVarNa
 		prop_name := strTrim(attr_name[len("bind:"):])
 		var evt_name string
 		switch prop_name {
-		case "value":
+		case "value", "checked":
 			evt_name = "input"
-			is_numeric := (node != nil && slices.Contains([]string{"number", "range"}, htmlAttr(node, "type")))
+			is_num := (node != nil && slices.Contains([]string{"number", "range"}, htmlAttr(node, "type")))
 			js_prop_expr := jsVarNameCurNode + "." + prop_name
-			if is_numeric {
+			if is_num {
 				name_parse_fn := "parseInt"
 				if strings.Contains(htmlAttr(node, "value"), ".") || strings.Contains(htmlAttr(node, "min"), ".") || strings.Contains(htmlAttr(node, "max"), ".") || strings.Contains(htmlAttr(node, "step"), ".") {
 					name_parse_fn = "parseFloat"
