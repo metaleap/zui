@@ -52,6 +52,15 @@ export function deepEq(val1, val2) {
 export class ZuiElement extends HTMLElement {
     #subs = new Map()
 
+    dispatch(eventName, details) {
+        this.dispatchEvent(new CustomEvent(eventName, {
+            detail: details,
+            composed: true,
+            bubbles: true,
+
+        }));
+    }
+
     zuiSub(name, fn) {
         let arr = this.#subs.get(name)
         if (!arr)
