@@ -10,12 +10,10 @@ export class App extends ZuiElement {
     const f2 = (() => ((evt) => {
     return alert("clicked");
 })).bind(this);
-    let o_f3 = false;
     const f3 = (() => ((evt) => {
-      if (o_f3) { return; } else { o_f3 = true; }
       f2().bind(this)(evt);
     })).bind(this);
-    e1.addEventListener('click', ((evt) => (f3)().bind(this)(evt)).bind(this));
+    e1.addEventListener('click', ((evt) => (f3)().bind(this)(evt)).bind(this), {once:true});
     n_e1.push(newT("Click me once"));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

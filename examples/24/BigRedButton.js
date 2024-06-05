@@ -10,7 +10,7 @@ export class BigRedButton extends ZuiElement {
     const f2 = (() => ((evt) => {
       this.dispatch('click', evt.detail);
     }));
-    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     n_e1.push(newT(" Push "));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

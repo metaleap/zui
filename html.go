@@ -328,7 +328,8 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 	}
 	me.WriteString(pref + "const n_" + node_var_name + " = [];")
 
-	for _, attr := range curNode.Attr {
+	for i := 0; i < len(curNode.Attr); i++ {
+		attr := curNode.Attr[i]
 		if strings.HasPrefix(attr.Key, "zui-") {
 			continue
 		}
@@ -378,8 +379,10 @@ func (me *zui2js) htmlWalkTagNodeAndEmitJS(curNode *html.Node, parentNodeVarName
 				if len(parts) > 0 {
 					part = &parts[0]
 				}
-				if err = me.doDirectiveAttr(&attr, node_var_name, fn_name, part); err != nil {
+				if add_attrs, err := me.doDirectiveAttr(&attr, node_var_name, fn_name, part); err != nil {
 					return err
+				} else {
+					curNode.Attr = append(curNode.Attr, add_attrs...)
 				}
 			} else {
 				fn_name_attr := me.nextFnName()

@@ -59,7 +59,7 @@ export class App extends ZuiElement {
     const f14 = (() => (() => {
     return (this.#selected = color);
 })).bind(this);
-    e7.addEventListener('click', ((evt) => (f14)().bind(this)(evt)).bind(this));
+    e7.addEventListener('click', ((evt) => (f14)().bind(this)(evt)).bind(this), {});
     const f15 = (() => (i + 1)).bind(this);
     const e16 = newT(f15());
     n_e7.push(e16);

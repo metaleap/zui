@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string, jsAttrValFnName string, part *htmlTextAndExprsSplitItem) error {
+func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string, jsAttrValFnName string, jsPart *htmlTextAndExprsSplitItem) (addAttrs []html.Attribute, err error) {
 	const pref = "\n    "
 	attr_name := strTrim(attr.Key)
 	assert(attr_name != "")
@@ -18,7 +18,7 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 		parts := strings.Split(strTrim(attr_name[len("on:"):]), "|")
 		evt_name := strTrim(parts[0])
 		if evt_name == "" {
-			return errors.New(me.zuiFilePath + ": event name missing after `on:`")
+			return nil, errors.New(me.zuiFilePath + ": event name missing after `on:`")
 		}
 		evt_fwd, evt_mods := (jsAttrValFnName == ""), parts[1:]
 		if evt_fwd {
@@ -28,43 +28,51 @@ func (me *zui2js) doDirectiveAttr(attr *html.Attribute, jsVarNameCurNode string,
 			me.WriteString(pref + "}));")
 		}
 		if len(evt_mods) > 0 {
-			evt_once := slices.Contains(evt_mods, "once")
-			evt_prevdef := slices.Contains(evt_mods, "preventDefault")
-			evt_stopprop := slices.Contains(evt_mods, "stopPropagation")
-			evt_trusted := slices.Contains(evt_mods, "trusted")
 			name_fn := me.nextFnName()
-			if evt_once {
-				me.WriteString(pref + "let o_" + name_fn + " = false;")
-			}
 			me.WriteString(pref + "const " + name_fn + " = (() => ((evt) => {")
-			if evt_once {
-				me.WriteString(pref + "  if (o_" + name_fn + ") { return; } else { o_" + name_fn + " = true; }")
+			if slices.Contains(evt_mods, "trusted") {
+				me.WriteString(pref + "  if (!evt.isTrusted) { return; }")
 			}
-			if evt_trusted {
-				me.WriteString(pref + "  if (!evt.trusted) { return; }")
+			if slices.Contains(evt_mods, "self") {
+				me.WriteString(pref + "  if (!evt.target !== this) { return; }")
 			}
-			if evt_prevdef {
+			if slices.Contains(evt_mods, "preventDefault") {
 				me.WriteString(pref + "  evt.preventDefault();")
 			}
-			if evt_stopprop {
+			if slices.Contains(evt_mods, "stopPropagation") {
 				me.WriteString(pref + "  evt.stopPropagation();")
 			}
 			me.WriteString(pref + "  " + jsAttrValFnName + "().bind(this)(evt);")
 			me.WriteString(pref + "})).bind(this);")
 			jsAttrValFnName = name_fn
 		}
-		me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => (" + jsAttrValFnName + ")().bind(this)(evt)).bind(this)" +
-			ıf(!slices.Contains(evt_mods, "capture"), "", ", { capture: true }") + ");")
+		me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name +
+			"', ((evt) => (" + jsAttrValFnName + ")().bind(this)(evt)).bind(this), {" +
+			strings.TrimSuffix(
+				ıf(!slices.Contains(evt_mods, "once"), "", "once:true,")+
+					ıf(!slices.Contains(evt_mods, "passive"), "", "passive:true,")+
+					ıf(!slices.Contains(evt_mods, "nonpassive"), "", "passive:false,")+
+					ıf(!slices.Contains(evt_mods, "capture"), "", "capture:true,"),
+				",") + "});")
 
 	case strings.HasPrefix(attr_name, "bind:"):
-		if part == nil || part.jsExpr == nil {
-			return errors.New(me.zuiFilePath + ": invalid 'bind' argument `" + attr.Val + "`")
+		if jsPart == nil || jsPart.jsExpr == nil {
+			return nil, errors.New(me.zuiFilePath + ": invalid 'bind' argument `" + attr.Val + "`")
 		}
-		js_expr_frag := strings.TrimSuffix(jsString(part.jsExpr), ";")
-		println(">>>>>>>>>" + js_expr_frag + "<<<<<<<<<")
+		js_expr_frag := strings.TrimSuffix(jsString(jsPart.jsExpr), ";")
+		prop_name := strTrim(attr_name[len("bind:"):])
+		var evt_name string
+		switch prop_name {
+		case "value":
+			evt_name = "input"
+			me.WriteString(pref + jsVarNameCurNode + ".addEventListener('" + evt_name + "', ((evt) => { " + js_expr_frag + " = " + jsVarNameCurNode + "." + prop_name + "; }).bind(this));")
+			addAttrs = append(addAttrs, html.Attribute{Key: prop_name, Val: attr.Val})
+		default:
+			panic("TODO: implement event-handling for capturing '" + prop_name + "' changes")
+		}
 
 	default:
-		return errors.New(me.zuiFilePath + ": unknown directive '" + attr_name + "'")
+		return nil, errors.New(me.zuiFilePath + ": unknown directive '" + attr_name + "'")
 	}
-	return nil
+	return
 }

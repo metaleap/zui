@@ -17,7 +17,7 @@ export class Inner extends ZuiElement {
     const e1 = newE("button");
     const n_e1 = [];
     const f2 = (() => (this.#sayHello)).bind(this);
-    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     n_e1.push(newT(" Click to say hello "));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);

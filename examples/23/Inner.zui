@@ -6,4 +6,4 @@
     }
 </script>
 
-<button on:click={sayHello}> 23 Click to say hello </button>
+<button on:click={sayHello}>Click to say hello</button>

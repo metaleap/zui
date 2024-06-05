@@ -17,7 +17,7 @@ export class App extends ZuiElement {
     const e1 = newE(Inner.ZuiTagName);
     const n_e1 = [];
     const f2 = (() => (this.#handleMessage)).bind(this);
-    e1.addEventListener('message', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('message', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);

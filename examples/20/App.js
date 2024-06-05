@@ -22,7 +22,7 @@ export class App extends ZuiElement {
     const f2 = (() => ((e) => {
     this.#m = {x: e.clientX, y: e.clientY};
 })).bind(this);
-    e1.addEventListener('pointermove', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('pointermove', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     n_e1.push(newT("\n    The pointer is at "));
     const f3 = (() => (this.#m.x)).bind(this);
     const e4 = newT(f3());

@@ -45,7 +45,7 @@ export class App extends ZuiElement {
     const e6 = newE("button");
     const n_e6 = [];
     const f7 = (() => (this.#addNumber)).bind(this);
-    e6.addEventListener('click', ((evt) => (f7)().bind(this)(evt)).bind(this));
+    e6.addEventListener('click', ((evt) => (f7)().bind(this)(evt)).bind(this), {});
     n_e6.push(newT(" Add a number "));
     e6.replaceChildren(...n_e6);
     n_shadowRoot.push(e6);

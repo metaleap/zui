@@ -32,7 +32,7 @@ export class App extends ZuiElement {
     const e1 = newE("div");
     const n_e1 = [];
     const f2 = (() => (this.#handleMove)).bind(this);
-    e1.addEventListener('pointermove', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('pointermove', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     n_e1.push(newT("\n    The pointer is at "));
     const e3 = newE("b");
     const n_e3 = [];

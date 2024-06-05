@@ -25,7 +25,7 @@ export class App extends ZuiElement {
     const e1 = newE("button");
     const n_e1 = [];
     const f2 = (() => (this.#handleClick)).bind(this);
-    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('click', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     n_e1.push(newT("\n    Clicked "));
     const f3 = (() => (this.#count)).bind(this);
     const e4 = newT(f3());

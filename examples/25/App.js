@@ -20,19 +20,23 @@ export class App extends ZuiElement {
     const e1 = newE("input");
     const n_e1 = [];
     const f2 = (() => (this.#name)).bind(this);
+    e1.addEventListener('input', ((evt) => { this.#name = e1.value; }).bind(this));
+    const f3 = f2;
+    e1.setAttribute("value",  f3());
+    this.zuiSub('name', () => e1.setAttribute("value",  f3()));
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     n_shadowRoot.push(newT(" "));
-    const e3 = newE("h1");
-    const n_e3 = [];
-    n_e3.push(newT("Hello "));
-    const f4 = f2;
-    const e5 = newT(f4());
-    this.zuiSub('name', (() => { e5.nodeValue = f4(); }).bind(this));
-    n_e3.push(e5);
-    n_e3.push(newT("!"));
-    e3.replaceChildren(...n_e3);
-    n_shadowRoot.push(e3);
+    const e5 = newE("h1");
+    const n_e5 = [];
+    n_e5.push(newT("Hello "));
+    const f6 = f2;
+    const e7 = newT(f6());
+    this.zuiSub('name', (() => { e7.nodeValue = f6(); }).bind(this));
+    n_e5.push(e7);
+    n_e5.push(newT("!"));
+    e5.replaceChildren(...n_e5);
+    n_shadowRoot.push(e5);
     shadowRoot.replaceChildren(...n_shadowRoot);
   }
   constructor() {

@@ -14,7 +14,7 @@ export class Outer extends ZuiElement {
     const f2 = (() => ((evt) => {
       this.dispatch('message', evt.detail);
     }));
-    e1.addEventListener('message', ((evt) => (f2)().bind(this)(evt)).bind(this));
+    e1.addEventListener('message', ((evt) => (f2)().bind(this)(evt)).bind(this), {});
     e1.replaceChildren(...n_e1);
     n_shadowRoot.push(e1);
     shadowRoot.replaceChildren(...n_shadowRoot);
