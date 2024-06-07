@@ -1,11 +1,11 @@
 // Code generated from App.zui. DO NOT EDIT
-// Source file content hash: 3hdxn93ch1dbq9iooj9ksf23r3o2k379frh7t52q04q6j98t4ttiwr0yb
+// Source file content hash: 2hvcna5stxb6p2ytxynwf3a0g3ic0gn3njff4eltaaw1g3vpcs13z1mou
 
 import { ZuiElement, deepEq, newE, newT } from '../../zui.js';
 export class App extends ZuiElement {
 
 
-  #v0 = [{ id: 1, text: `Where did you go to school?` }, { id: 2, text: `What is your mother's name?` }, { id: 3, text: `What is another personal fact that an attacker could easily find with Google?` }];
+  #v0 = [{id: 1, text: `Where did you go to school?`}, {id: 2, text: `What is your mother's name?`}, {id: 3, text: `What is another personal fact that an attacker could easily find with Google?`}];
   get #questions() { return this.#v0; }
   set #questions(v) {
     if (!deepEq(this.#v0, v)) {
@@ -30,9 +30,9 @@ export class App extends ZuiElement {
     }
   }
 
-  #handleSubmit() {
+#handleSubmit() {
     alert(`answered question ${this.#selected.id} (${this.#selected.text}) with "${this.#answer}"`);
-  }
+}
 
 
 
@@ -59,30 +59,29 @@ export class App extends ZuiElement {
     e5.addEventListener('input', f7);
     e5.addEventListener('change', f7);
     const f8 = (() => (() => {
-      return (this.#answer = "");
-    })).bind(this);
+    return (this.#answer = "");
+})).bind(this);
     e5.addEventListener('change', ((evt) => (f8)().bind(this)(evt)).bind(this), {});
     const f9 = f6;
-    this.zuiSet(e5, "value", f9());
-    this.zuiSub('selected', () => this.zuiSet(e5, "value", f9()));
+    this.zuiSet(e5, "value",  f9());
+    this.zuiSub('selected', () => this.zuiSet(e5, "value",  f9()));
     n_e5.push(newT(" "));
     const f11 = (() => { //startLoop
       n_e5.splice(0);
       for (const question of this.#questions) {
-        n_e5.push(newT(" "));
-        const e12 = newE("option");
-        const n_e12 = [];
-        const f13 = (() => { console.log(question, typeof question); return (question) }).bind(this);
-        this.zuiSet(e12, "value", f13());
-        console.log(e12.value, typeof e12.value);
-        n_e12.push(newT(" "));
-        const f15 = (() => (question.text)).bind(this);
-        const e16 = newT(f15());
-        n_e12.push(e16);
-        n_e12.push(newT(" "));
-        e12.replaceChildren(...n_e12);
-        n_e5.push(e12);
-        n_e5.push(newT(" "));
+    n_e5.push(newT(" "));
+    const e12 = newE("option");
+    const n_e12 = [];
+    const f13 = (() => (question)).bind(this);
+    this.zuiSet(e12, "value",  f13());
+    n_e12.push(newT(" "));
+    const f15 = (() => (question.text)).bind(this);
+    const e16 = newT(f15());
+    n_e12.push(e16);
+    n_e12.push(newT(" "));
+    e12.replaceChildren(...n_e12);
+    n_e5.push(e12);
+    n_e5.push(newT(" "));
       }
       if (n_e5.length != e5.childNodes.length)
         e5.replaceChildren(...n_e5);
@@ -105,18 +104,18 @@ export class App extends ZuiElement {
     e17.addEventListener('input', f19);
     e17.addEventListener('change', f19);
     const f20 = f18;
-    this.zuiSet(e17, "value", f20());
-    this.zuiSub('answer', () => this.zuiSet(e17, "value", f20()));
+    this.zuiSet(e17, "value",  f20());
+    this.zuiSub('answer', () => this.zuiSet(e17, "value",  f20()));
     e17.replaceChildren(...n_e17);
     n_e2.push(e17);
     n_e2.push(newT(" "));
     const e22 = newE("button");
     const n_e22 = [];
     const f23 = (() => (!this.#answer)).bind(this);
-    this.zuiSet(e22, "disabled", f23());
-    this.zuiSub('answer', () => this.zuiSet(e22, "disabled", f23()));
+    this.zuiSet(e22, "disabled",  f23());
+    this.zuiSub('answer', () => this.zuiSet(e22, "disabled",  f23()));
     const f25 = (() => ("submit")).bind(this);
-    this.zuiSet(e22, "type", f25());
+    this.zuiSet(e22, "type",  f25());
     n_e22.push(newT(" Submit "));
     e22.replaceChildren(...n_e22);
     n_e2.push(e22);
@@ -144,6 +143,6 @@ export class App extends ZuiElement {
     this.zuiCreateHTMLElements(shadowRoot);
   }
 
-  static ZuiTagName = "zui-app_3hdxn93ch1dbq9iooj9ksf23r3o2k379frh7t52q04q6j98t4ttiwr0yb";
+  static ZuiTagName = "zui-app_2hvcna5stxb6p2ytxynwf3a0g3ic0gn3njff4eltaaw1g3vpcs13z1mou";
 }
 customElements.define(App.ZuiTagName, App);
