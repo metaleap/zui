@@ -1,1 +1,1 @@
-For more info: talked about this project, its ins and outs and ups and downs, with [@jimafisk](https://github.com/jimafisk) [on Youtube (~35 minutes)](https://farside.link/invidious/watch?v=cNUvXb5FuJg)
+For more info: talked about this project, its ins and outs and ups and downs, with [@jimafisk](https://github.com/jimafisk) on his channel: [video here (~35 minutes)](https://farside.link/invidious/watch?v=cNUvXb5FuJg)
